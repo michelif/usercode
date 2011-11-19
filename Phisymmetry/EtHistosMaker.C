@@ -39,19 +39,22 @@ void EtHistoMakerBarrel(){
   TH1F* nXtal_vs_eta=new TH1F("nXtal_vs_eta","nXtal_vs_eta",170,-85., 85.);
   TH1F* nXtal_vs_phi=new TH1F("nXtal_vs_phi","nXtal_vs_phi",360,1., 360.);
   TH2F* nXtal_vs_etaphi=new TH2F("nXtal_vs_etaphi","nXtal_vs_etaphi",360,1.,360.,170,-85.,85.);
+  TH1F* nXtal_vs_phi_vec[4];
 
   int ieta,iphi,sign;
   unsigned int nhits;
   double et;
-  string histoName("etsum_barl_vs_phi_vec_");
-
+  string histoNameEt("etsum_barl_vs_phi_vec_");
+  string histoNameXtal("nXtal_vs_phi_vec_");
 
   for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
     std::stringstream out;
     out<<kEtaBin;
-    string dummyString=histoName+out.str();
+    string dummyStringEt=histoNameEt+out.str();
+    string dummyStringXtal=histoNameXtal+out.str();
     //    cout<<dummyString<<endl;
-    etsum_barl_vs_phi_vec[kEtaBin]=new TH1F(dummyString.c_str(), dummyString.c_str(),360,1.,360.);
+    etsum_barl_vs_phi_vec[kEtaBin]=new TH1F(dummyStringEt.c_str(), dummyStringEt.c_str(),360,1.,360.);
+    nXtal_vs_phi_vec[kEtaBin]=new TH1F(dummyStringXtal.c_str(), dummyStringXtal.c_str(),360,1.,360.);
   }
   
   std::ifstream etsum_barl_in("etsummary_barl.dat", ios::in);
@@ -70,8 +73,10 @@ void EtHistoMakerBarrel(){
     for(int kEtaBin=0;kEtaBin<3;kEtaBin++){
       if(TMath::Abs(ieta+1)>=kEtaBin*20 && TMath::Abs(ieta+1)<(kEtaBin+1)*20) {
 	etsum_barl_vs_phi_vec[kEtaBin]->Fill(iphi+1, et);
+	if(et!=0) nXtal_vs_phi_vec[kEtaBin]->Fill(iphi+1);
       }else if (TMath::Abs(ieta+1)<=85){
 	etsum_barl_vs_phi_vec[3]->Fill(iphi+1, et);
+	if(et!=0) nXtal_vs_phi_vec[3]->Fill(iphi+1);
       }
     }
   }  
@@ -80,6 +85,9 @@ void EtHistoMakerBarrel(){
   etsum_barl_vs_eta->Divide(nXtal_vs_eta);
   etsum_barl_vs_phi->Divide(nXtal_vs_phi);
   etsum_barl_vs_etaphi->Divide(nXtal_vs_etaphi);
+  for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
+    etsum_barl_vs_phi_vec[kEtaBin]->Divide(nXtal_vs_phi_vec[kEtaBin]);
+  }
 
   //label histos
   (etsum_barl_vs_eta->GetXaxis())->SetTitle("i#eta");
@@ -110,7 +118,13 @@ void EtHistoMakerBarrel(){
   nXtal_vs_eta->Write();
   nXtal_vs_phi->Write();
   nXtal_vs_etaphi->Write();
-  
+  for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
+    (nXtal_vs_phi_vec[kEtaBin]->GetYaxis())->SetTitle("NXtal");
+    (nXtal_vs_phi_vec[kEtaBin]->GetXaxis())->SetTitle("i#phi");
+    nXtal_vs_phi_vec[kEtaBin]->Write();
+  }  
+
+
   f.Close();
   
 
