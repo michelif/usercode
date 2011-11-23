@@ -58,7 +58,12 @@ void EtHistoMakerBarrel(){
   }
   
   std::ifstream etsum_barl_in("etsummary_barl.dat", ios::in);
-  
+
+  if (!etsum_barl_in.is_open()) {
+    cout<<"file not found"<<endl;
+    exit(0);
+  }
+
   while(!etsum_barl_in.eof()){
     etsum_barl_in>> ieta >> iphi >> sign >> et >> nhits;
     int theSign = sign==1 ? 1:-1;
@@ -97,6 +102,15 @@ void EtHistoMakerBarrel(){
   (etsum_barl_vs_etaphi->GetXaxis())->SetTitle("i#phi");
   (etsum_barl_vs_etaphi->GetYaxis())->SetTitle("i#eta");
 
+
+  for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
+    (etsum_barl_vs_phi_vec[kEtaBin]->GetYaxis())->SetTitle("E_{T}(GeV)");
+    (etsum_barl_vs_phi_vec[kEtaBin]->GetXaxis())->SetTitle("i#phi");
+    (nXtal_vs_phi_vec[kEtaBin]->GetYaxis())->SetTitle("NXtal");
+    (nXtal_vs_phi_vec[kEtaBin]->GetXaxis())->SetTitle("i#phi");
+
+  }
+
   (nXtal_vs_eta->GetXaxis())->SetTitle("i#eta");	  
   (nXtal_vs_eta->GetYaxis())->SetTitle("NXtal");
   (nXtal_vs_phi->GetXaxis())->SetTitle("i#phi");	  
@@ -104,14 +118,42 @@ void EtHistoMakerBarrel(){
   (nXtal_vs_etaphi->GetXaxis())->SetTitle("i#phi");
   (nXtal_vs_etaphi->GetYaxis())->SetTitle("i#eta");
 
+
+
+  TCanvas* dummyCanvas=new TCanvas("dummyCanvas","dummyCanvas",1); 
+  dummyCanvas->cd();
+  
+  etsum_barl_vs_eta->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/etsum_barl_vs_eta.png");
+
+  etsum_barl_vs_phi->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/etsum_barl_vs_phi.png");
+
+  etsum_barl_vs_etaphi->Draw("colz");
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/etsum_barl_vs_etaphi.png");
+
+  nXtal_vs_eta->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/nXtal_vs_eta.png");
+
+  nXtal_vs_phi->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/nXtal_vs_phi.png");
+
+
+  dummyCanvas->Close();
+
+
   f.cd();
   //write et histos
   etsum_barl_vs_eta->Write();
   etsum_barl_vs_phi->Write();
   etsum_barl_vs_etaphi->Write();
   for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
-    (etsum_barl_vs_phi_vec[kEtaBin]->GetYaxis())->SetTitle("E_{T}(GeV)");
-    (etsum_barl_vs_phi_vec[kEtaBin]->GetXaxis())->SetTitle("i#phi");
+
     etsum_barl_vs_phi_vec[kEtaBin]->Write();
   }
   //write nXtal Histos
@@ -119,8 +161,7 @@ void EtHistoMakerBarrel(){
   nXtal_vs_phi->Write();
   nXtal_vs_etaphi->Write();
   for(int kEtaBin=0;kEtaBin<4;kEtaBin++){
-    (nXtal_vs_phi_vec[kEtaBin]->GetYaxis())->SetTitle("NXtal");
-    (nXtal_vs_phi_vec[kEtaBin]->GetXaxis())->SetTitle("i#phi");
+
     nXtal_vs_phi_vec[kEtaBin]->Write();
   }  
 
