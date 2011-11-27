@@ -37,6 +37,12 @@ void kFactorHistoMakerBarrel(){
   TH1F* k_phi_barl_vs_phi= new TH1F("k_phi_barrel_vs_phi","k_phi_barrel_vs_phi",360,1., 360.);
   TH2F* k_phi_barl_vs_etaphi=new TH2F("k_phi_barrel_vs_etaphi","k_phi_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
 
+  //histos to normalize
+  TH1F* nentries_barl_vs_eta=new TH1F("nentries_barrel_vs_eta","nentries_barrel_vs_eta",170,-85., 85.);
+  TH1F* nentries_barl_vs_phi= new TH1F("nentries_barrel_vs_phi","nentries_barrel_vs_phi",360,1., 360.);
+  TH2F* nentries_barl_vs_etaphi=new TH2F("nentries_barrel_vs_etaphi","nentries_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
+
+
   int counter=0;
   int ieta,iphi,sign;
   double kFactor;
@@ -56,14 +62,17 @@ void kFactorHistoMakerBarrel(){
     k_phi_barl_vs_eta->Fill((ieta+1)*theSign,kFactor);
     k_phi_barl_vs_phi->Fill(iphi+1, kFactor);
     k_phi_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,kFactor);
+    nentries_barl_vs_eta->Fill((ieta+1)*theSign,nhits);
+    nentries_barl_vs_phi->Fill(iphi+1, nhits);
+    nentries_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,nhits);
     }
   }
 
   //label histos
 
-  k_phi_barl_vs_eta->Scale(1./(360*NJOBS));
-  k_phi_barl_vs_phi->Scale(1./(85.*2*NJOBS));
-  k_phi_barl_vs_etaphi->Scale(1./NJOBS);
+  k_phi_barl_vs_eta->Divide(nentries_barl_vs_eta);
+  k_phi_barl_vs_phi->Divide(nentries_barl_vs_phi);
+  k_phi_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
   (k_phi_barl_vs_eta->GetXaxis())->SetTitle("i#eta");
   (k_phi_barl_vs_eta->GetYaxis())->SetTitle("K");
   (k_phi_barl_vs_phi->GetXaxis())->SetTitle("i#phi");

@@ -42,8 +42,6 @@ void LCHistoMakerBarrel(){
   TH1F* nentries_barl_vs_phi= new TH1F("nentries_barrel_vs_phi","nentries_barrel_vs_phi",360,1., 360.);
   TH2F* nentries_barl_vs_etaphi=new TH2F("nentries_barrel_vs_etaphi","nentries_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
 
-
-
   int counter=0;
   int ieta,iphi,sign,nhits;
   float LC;
