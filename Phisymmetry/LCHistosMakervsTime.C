@@ -26,24 +26,41 @@
 #include <stdlib.h>
 
 #define NJOBS_MIN 1
-#define NJOBS_MAX 34
+#define NJOBS_MAX 46
 #define NJOBS NJOBS_MAX-NJOBS_MIN+1
+#define NFILES 3
 #define kBarlRings 85//change!
 #define kBarlWedges 360
 #define kSides 2
 #define NROWSJOB kBarlRings*kBarlWedges*kSides
 
+
 using namespace std;
 
 void LCHistoMakerBarrelvsTime(){
   // cout<<"start"<<endl; 
+  std::ifstream LC_barl_in("LC_barl.dat", ios::in);
+  std::ifstream avgTime_barl_in("avg_time_barl.dat", ios::in);
 
-  
+if (!LC_barl_in.is_open()) {
+    cout<<"file not found"<<endl;
+    exit(0);
+  }
+
+  if (!avgTime_barl_in.is_open()) {
+    cout<<"time file not found"<<endl;
+    exit(0);
+  }
+
+
+  for (int iFile =0; iFile<NFILES;iFile++){
+
   stringstream nameFileStream;
-  nameFileStream<<"LCHistosvsTime_"<<NJOBS_MIN<<"_"<<NJOBS_MAX<<".root";
+  nameFileStream<<"LCHistosvsTime_"<<iFile<<".root";
 
 
   TFile f(nameFileStream.str().c_str(),"recreate");
+
 
   int counter=0,counterJob=0;
   int ieta,iphi,sign,nhits;
@@ -71,20 +88,9 @@ void LCHistoMakerBarrelvsTime(){
       }
     }
 
-  std::ifstream LC_barl_in("LC_barl.dat", ios::in);
-  std::ifstream avgTime_barl_in("avg_time_barl.dat", ios::in);
 
-  if (!LC_barl_in.is_open()) {
-    cout<<"file not found"<<endl;
-    exit(0);
-  }
-
-  if (!avgTime_barl_in.is_open()) {
-    cout<<"time file not found"<<endl;
-    exit(0);
-  }
-
-  while(!LC_barl_in.eof() && counterJob< NJOBS){
+  
+  while(counterJob< NJOBS){
     //    cout<<"entering"<<endl;
     int counterRow=0;
 
@@ -125,22 +131,30 @@ void LCHistoMakerBarrelvsTime(){
     cout<<"iieta "<<iieta<<endl;
     for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
       for(int iisign=0;iisign<kSides;iisign++){
-
+	
 	graphLCvsTime[iieta][iiphi][iisign]= new TGraph(NJOBS,avgTime,LCvsTime[iieta][iiphi][iisign]);  
 	string dummyString;
 	stringstream dummyStream;
-	dummyStream<<"LCvsEta_"<<iieta<<"_"<<iiphi<<"_"<<iisign;
+	dummyStream<<"LCvsEta_"<<iFile<<"_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;
 	dummyString=dummyStream.str();
 	graphLCvsTime[iieta][iiphi][iisign]->GetYaxis()->SetTitle("LC");
 	graphLCvsTime[iieta][iiphi][iisign]->GetXaxis()->SetTitle("unixtime");
+	graphLCvsTime[iieta][iiphi][iisign]->SetMarkerSize(1.);
+	graphLCvsTime[iieta][iiphi][iisign]->SetMarkerColor(4);
+	graphLCvsTime[iieta][iiphi][iisign]->SetMarkerStyle(20);
 	graphLCvsTime[iieta][iiphi][iisign]->SetName(dummyString.c_str());
 	graphLCvsTime[iieta][iiphi][iisign]->SetTitle(dummyString.c_str());
 	graphLCvsTime[iieta][iiphi][iisign]->Write();
+	for(int iiJob=0;iiJob<NJOBS;iiJob++){
+	  LCvsTime[iieta][iiphi][iisign][iiJob]=0.;
+	}
+	delete graphLCvsTime[iieta][iiphi][iisign];
       }
     }
   }
-
+  
   f.Write();
   f.Close();
+  }
 
 }
