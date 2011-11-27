@@ -37,9 +37,16 @@ void LCHistoMakerBarrel(){
   TH1F* LC_barl_vs_phi= new TH1F("LC_barrel_vs_phi","LC_barrel_vs_phi",360,1., 360.);
   TH2F* LC_barl_vs_etaphi=new TH2F("LC_barrel_vs_etaphi","LC_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
 
+  //histos to normalize
+  TH1F* nentries_barl_vs_eta=new TH1F("nentries_barrel_vs_eta","nentries_barrel_vs_eta",170,-85., 85.);
+  TH1F* nentries_barl_vs_phi= new TH1F("nentries_barrel_vs_phi","nentries_barrel_vs_phi",360,1., 360.);
+  TH2F* nentries_barl_vs_etaphi=new TH2F("nentries_barrel_vs_etaphi","nentries_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
+
+
+
   int counter=0;
   int ieta,iphi,sign,nhits;
-  float LC,LC_mean;
+  float LC;
   std::ifstream LC_barl_in("LC_barl.dat", ios::in);
 
   if (!LC_barl_in.is_open()) {
@@ -53,25 +60,32 @@ void LCHistoMakerBarrel(){
     LC_barl_in>> ieta >> iphi >> sign >> LC >> nhits;
     if(LC !=0 && nhits!=0){
     int theSign = sign==1 ? 1:-1;
-    LC_mean=(float)LC/nhits;
-    LC_barl_vs_eta->Fill((ieta+1)*theSign,LC_mean);
-    LC_barl_vs_phi->Fill(iphi+1, LC_mean);
-    LC_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,LC_mean);
+    LC_barl_vs_eta->Fill((ieta+1)*theSign,LC);
+    LC_barl_vs_phi->Fill(iphi+1, LC);
+    LC_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,LC);
+    nentries_barl_vs_eta->Fill((ieta+1)*theSign,nhits);
+    nentries_barl_vs_phi->Fill(iphi+1, nhits);
+    nentries_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,nhits);
     }
   }
 
-  //label histos
-  if (nmin>nmag) cout<<nmin<<endl;
 
-  LC_barl_vs_eta->Scale(1./(360*NJOBS));
-  LC_barl_vs_phi->Scale(1./(85.*2*NJOBS));
-  LC_barl_vs_etaphi->Scale(1./NJOBS);
+  LC_barl_vs_eta->Divide(nentries_barl_vs_eta);
+  LC_barl_vs_phi->Divide(nentries_barl_vs_phi);
+  LC_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
   (LC_barl_vs_eta->GetXaxis())->SetTitle("i#eta");
   (LC_barl_vs_eta->GetYaxis())->SetTitle("LC");
   (LC_barl_vs_phi->GetXaxis())->SetTitle("i#phi");
   (LC_barl_vs_phi->GetYaxis())->SetTitle("LC");
   (LC_barl_vs_etaphi->GetXaxis())->SetTitle("i#phi");
   (LC_barl_vs_etaphi->GetYaxis())->SetTitle("i#eta");
+
+  (nentries_barl_vs_eta->GetXaxis())->SetTitle("i#eta");
+  (nentries_barl_vs_eta->GetYaxis())->SetTitle("nentries");
+  (nentries_barl_vs_phi->GetXaxis())->SetTitle("i#phi");
+  (nentries_barl_vs_phi->GetYaxis())->SetTitle("nentries");
+  (nentries_barl_vs_etaphi->GetXaxis())->SetTitle("i#phi");
+  (nentries_barl_vs_etaphi->GetYaxis())->SetTitle("i#eta");
 
   TCanvas* dummyCanvas=new TCanvas("dummyCanvas","dummyCanvas",1); 
   dummyCanvas->cd();
@@ -87,6 +101,19 @@ void LCHistoMakerBarrel(){
   LC_barl_vs_etaphi->Draw("colz");
   dummyCanvas->Write();
   dummyCanvas->SaveAs("./plots/png/LC_barl_vs_etaphi.png");
+
+  nentries_barl_vs_eta->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/nentries_barl_vs_eta.png");
+
+  nentries_barl_vs_phi->Draw();
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/nentries_barl_vs_phi.png");
+
+  nentries_barl_vs_etaphi->Draw("colz");
+  dummyCanvas->Write();
+  dummyCanvas->SaveAs("./plots/png/nentries_barl_vs_etaphi.png");
+
 
   dummyCanvas->Close();
 
