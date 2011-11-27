@@ -38,7 +38,7 @@ void kFactorHistoMakerBarrel(){
   TH2F* k_phi_barl_vs_etaphi=new TH2F("k_phi_barrel_vs_etaphi","k_phi_barrel_vs_etaphi",360,1.,360.,170,-85.,85.);
 
   int counter=0;
-  int ieta,iphi;
+  int ieta,iphi,sign;
   double kFactor;
   std::ifstream k_phi_barl_in("k_phi_barl.dat", ios::in);
 
@@ -50,16 +50,19 @@ void kFactorHistoMakerBarrel(){
   while(!k_phi_barl_in.eof()){
     counter++;
     if(counter%10000==0) cout<<counter<<endl;
-    k_phi_barl_in>> ieta >> iphi >> kFactor;
-    k_phi_barl_vs_eta->Fill(ieta+1, kFactor);
+    k_phi_barl_in>> ieta >> iphi >> sign >> kFactor;
+    if(kFactor !=0){
+    int theSign = sign==1 ? 1:-1;
+    k_phi_barl_vs_eta->Fill((ieta+1)*theSign,kFactor);
     k_phi_barl_vs_phi->Fill(iphi+1, kFactor);
-    k_phi_barl_vs_etaphi->Fill(iphi+1,ieta+1,kFactor);
+    k_phi_barl_vs_etaphi->Fill(iphi+1,(ieta+1)*theSign,kFactor);
+    }
   }
 
   //label histos
 
   k_phi_barl_vs_eta->Scale(1./(360*NJOBS));
-  k_phi_barl_vs_phi->Scale(1./(85.*NJOBS));
+  k_phi_barl_vs_phi->Scale(1./(85.*2*NJOBS));
   k_phi_barl_vs_etaphi->Scale(1./NJOBS);
   (k_phi_barl_vs_eta->GetXaxis())->SetTitle("i#eta");
   (k_phi_barl_vs_eta->GetYaxis())->SetTitle("K");
