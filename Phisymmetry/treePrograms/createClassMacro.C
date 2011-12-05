@@ -1,5 +1,7 @@
 {
-TChain inputChain("variablesTree_barl");
+
+TChain inputChain_barl("variablesTree_barl");
+TChain inputChain_endc("variablesTree_endc");
 
 std::ifstream fileList("filelist.txt", ios::in);
 
@@ -14,15 +16,23 @@ int sum=0;
 while(!fileList.eof()){
   string nameFile;
   getline(fileList,nameFile);
-  inputChain.Add(nameFile.c_str());
+  inputChain_barl.Add(nameFile.c_str());
+  inputChain_endc.Add(nameFile.c_str());
   sum++;
   cout<<sum<<endl;
  }
 
 
- gROOT->ProcessLine(".L plotsMacro.C+");
- gROOT->ProcessLine("plotsMacro t(&inputChain)");
 
- gROOT->ProcessLine("t.Loop()");
+
+ bool doBarlPlots=true;
+
+ gROOT->ProcessLine(".L plotsMacro.C+");
+ if(doBarlPlots){
+ gROOT->ProcessLine("plotsMacro t(&inputChain_barl)");
+ }else{
+ gROOT->ProcessLine("plotsMacro t(&inputChain_endc)");
+ }
+ gROOT->ProcessLine("t.Loop(doBarlPlots)");
 
 }
