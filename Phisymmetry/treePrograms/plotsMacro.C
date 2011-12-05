@@ -30,7 +30,7 @@
 
 using namespace std;
 
-void plotsMacro::Loop()
+void plotsMacro::Loop(bool doBarlPlots)
 {
 //   In a ROOT session, you can do:
 //      Root > .L plotsMacro.C
@@ -65,31 +65,96 @@ void plotsMacro::Loop()
    TH2F* lc_barl_vs_etaphi=new TH2F("lc_barl_vs_etaphi","lc_barl_vs_etaphi",360,1.,360.,170,-85.,85.);
    TH2F* et_barl_vs_etaphi=new TH2F("et_barl_vs_etaphi","et_barl_vs_etaphi",360,1.,360.,170,-85.,85.);
 
+   TH2F* nentries_endc_vs_xy=new TH2F("nentries_endc_vs_xy","nentries_endc_vs_xy",100,1.,100.,100,1.,100.);
+   TH2F* lc_endc_vs_xy=new TH2F("lc_endc_vs_xy","lc_endc_vs_xy",100,1.,100.,100,1.,100.);
+   TH2F* et_endc_vs_xy=new TH2F("et_endc_vs_xy","et_endc_vs_xy",100,1.,100.,100,1.,100.);
 
-   TFile* outMap= TFile::Open("MapsOut.root","recreate");
+   TH2F* nentries_endc_vs_xy_positive=new TH2F("nentries_endc_vs_xy_positive","nentries_endc_vs_xy_positive",100,1.,100.,100,1.,100.);
+   TH2F* lc_endc_vs_xy_positive=new TH2F("lc_endc_vs_xy_positive","lc_endc_vs_xy_positive",100,1.,100.,100,1.,100.);
+   TH2F* et_endc_vs_xy_positive=new TH2F("et_endc_vs_xy_positive","et_endc_vs_xy_positive",100,1.,100.,100,1.,100.);
 
-      outMap->cd();
+   TH2F* nentries_endc_vs_xy_negative=new TH2F("nentries_endc_vs_xy_negative","nentries_endc_vs_xy_negative",100,1.,100.,100,1.,100.);
+   TH2F* lc_endc_vs_xy_negative=new TH2F("lc_endc_vs_xy_negative","lc_endc_vs_xy_negative",100,1.,100.,100,1.,100.);
+   TH2F* et_endc_vs_xy_negative=new TH2F("et_endc_vs_xy_negative","et_endc_vs_xy_negative",100,1.,100.,100,1.,100.);
+
+   
+   TFile* outMapBarl= TFile::Open("MapsOutBarl.root","create");
+   TFile* outMapEndc= TFile::Open("MapsOutEndc.root","create");
+   
+
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
-      // if (Cut(ientry) < 0) continue;
-      Long64_t ientry = LoadTree(jentry);
-      if (ientry < 0) break;
-      nb = fChain->GetEntry(jentry);   nbytes += nb;
-      if(jentry%10000000==0) std::cout<<jentry<<std::endl;
+     // if (Cut(ientry) < 0) continue;
+     Long64_t ientry = LoadTree(jentry);
+     if (ientry < 0) break;
+     nb = fChain->GetEntry(jentry);   nbytes += nb;
+     if(jentry%10000000==0) std::cout<<jentry<<std::endl;
+     
+     if(doBarlPlots){
+       nentries_barl_vs_etaphi->Fill(phiBranch,etaBranch);
+       lc_barl_vs_etaphi->Fill(phiBranch,etaBranch,lc_barl_Branch);
+       et_barl_vs_etaphi->Fill(phiBranch,etaBranch,et_barl_Branch);
+     }	else {
+       nentries_endc_vs_xy->Fill(xBranch,yBranch);
+       lc_endc_vs_xy->Fill(xBranch,yBranch,lc_endc_Branch);
+       et_endc_vs_xy->Fill(xBranch,yBranch,et_endc_Branch);
 
-      nentries_barl_vs_etaphi->Fill(phiBranch,etaBranch);
-      lc_barl_vs_etaphi->Fill(phiBranch,etaBranch,lcBranch);
-      et_barl_vs_etaphi->Fill(phiBranch,etaBranch,etBranch);
+       if(sign_endc_Branch>0){
+       nentries_endc_vs_xy_positive->Fill(xBranch,yBranch);
+       lc_endc_vs_xy_positive->Fill(xBranch,yBranch,lc_endc_Branch);
+       et_endc_vs_xy_positive->Fill(xBranch,yBranch,et_endc_Branch);
+       
+       }else{
+
+       nentries_endc_vs_xy_negative->Fill(xBranch,yBranch);
+       lc_endc_vs_xy_negative->Fill(xBranch,yBranch,lc_endc_Branch);
+       et_endc_vs_xy_negative->Fill(xBranch,yBranch,et_endc_Branch);
+
+       }
+     }
+   }	
+   
 
 
+   if(doBarlPlots){  
+     outMapBarl->cd();
 
+     lc_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
+     et_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
+     
+     lc_barl_vs_etaphi->Write();
+     et_barl_vs_etaphi->Write();
+    
+
+     outMapBarl->Write();
+     outMapBarl->Close();
+   
+  
+   }else{
+
+     outMapEndc->cd();
+
+     lc_endc_vs_xy->Divide(nentries_endc_vs_xy);
+     et_endc_vs_xy->Divide(nentries_endc_vs_xy);
+
+     lc_endc_vs_xy_positive->Divide(nentries_endc_vs_xy_positive);
+     et_endc_vs_xy_positive->Divide(nentries_endc_vs_xy_positive);
+
+     lc_endc_vs_xy_negative->Divide(nentries_endc_vs_xy_negative);
+     et_endc_vs_xy_negative->Divide(nentries_endc_vs_xy_negative);
+
+     
+     lc_endc_vs_xy->Write();
+     et_endc_vs_xy->Write();
+     
+     lc_endc_vs_xy_positive->Write();
+     et_endc_vs_xy_positive->Write();
+
+     lc_endc_vs_xy_negative->Write();
+     et_endc_vs_xy_negative->Write();
+
+
+     outMapEndc->Write();
+     outMapEndc->Close();
    }
-      lc_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
-      et_barl_vs_etaphi->Divide(nentries_barl_vs_etaphi);
-
-      lc_barl_vs_etaphi->Write();
-      et_barl_vs_etaphi->Write();
-
-      outMap->Write();
-      outMap->Close();
-
+      
 }
