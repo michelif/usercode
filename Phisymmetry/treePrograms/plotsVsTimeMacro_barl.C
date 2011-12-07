@@ -94,8 +94,8 @@ void plotsVsTimeMacro_barl::Loop()
 
 	  stringstream etName_barl_Stream;
 	  etName_barl_Stream<<"etVsTime_barl_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;
-	  et_barl_vs_time[iieta][iiphi][iisign]=new TH2F(etName_barl_Stream.str().c_str(),etName_barl_Stream.str().c_str(),360,1.,360.,170,-85.,85.);
-	  
+	  et_barl_vs_time[iieta][iiphi][iisign]=new TH2F(etName_barl_Stream.str().c_str(),etName_barl_Stream.str().c_str(),100,1312833000.,1314353000.,100,0,1);
+
 	  stringstream lcName_barl_Stream;
 	  lcName_barl_Stream<<"lcVsTime_barl_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;                                        
 	  lc_barl_vs_time[iieta][iiphi][iisign]=new TH2F(lcName_barl_Stream.str().c_str(),lcName_barl_Stream.str().c_str(),100,1312833000.,1314353000.,100,0.4,1.6);
@@ -139,7 +139,7 @@ void plotsVsTimeMacro_barl::Loop()
 	  
    */
 
-   int etaRef=0;
+   int etaRef=1;
    float etEtaRef=1;
    int nEtaRef=1;
    
@@ -155,8 +155,8 @@ void plotsVsTimeMacro_barl::Loop()
      //     cout<<(theEta-1)<<" "<<(thePhi-1)<<" "<<theSign<<endl;
      //     cout<<"lc "<<lc_barl_Branch<<"time "<<unixTime_barl_Branch<<endl;
      lc_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixTime_barl_Branch,lc_barl_Branch);
-     et_barl_vs_time[etaBranch-1][phiBranch-1][theSign]->Fill(unixTime_barl_Branch,et_barl_Branch);
-     if(theEta-1 == TMath::Abs(etaRef -1)){
+     et_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixTime_barl_Branch,et_barl_Branch);
+     if(theEta == TMath::Abs(etaRef)){
        etEtaRef+=et_barl_Branch;
        nEtaRef++;
      }
@@ -174,13 +174,13 @@ void plotsVsTimeMacro_barl::Loop()
    // }     
    }
      
-     
+   cout<<"loop ends"<<endl;    
    etEtaRef=(float)etEtaRef/nEtaRef;
-   
+   cout<<"etEtaRef "<<etEtaRef<<endl;
 
+   TFile* barlfile=TFile::Open("barrelVsTime.root","recreate");
 
-
-   TFile* lcFile=TFile::Open("lcVsTime.root","recreate");
+   cout<<"writing lc histos"<<endl;
    for(int iisign=0;iisign<kSides;iisign++){
      for(int iieta=0;iieta<kBarlRings;iieta++){
        if(iieta%10 ==0)cout<<iieta<<endl;
@@ -192,13 +192,53 @@ void plotsVsTimeMacro_barl::Loop()
 	 lc_barl_vs_time[iieta][iiphi][iisign]->SetMarkerSize(1.);
 	 lc_barl_vs_time[iieta][iiphi][iisign]->SetMarkerColor(4);
 	 lc_barl_vs_time[iieta][iiphi][iisign]->SetMarkerStyle(20);
-	 lc_barl_vs_time[iieta][iiphi][iisign]->Write();	 
+
+	 
+	 lc_barl_vs_time[iieta][iiphi][iisign]->Write();
+
 	 delete	 lc_barl_vs_time[iieta][iiphi][iisign];
+
        }
      }
-      }
+   }
+
+   cout<<"creating  histos"<<endl;
+
+   for(int iisign=0;iisign<kSides;iisign++){
+     for(int iieta=0;iieta<kBarlRings;iieta++){
+      if(iieta%10 ==0)cout<<iieta<<endl;
+       for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
+	 stringstream etEtaRefName_barl_Stream;
+	 etEtaRefName_barl_Stream<<"etOverEtaRefVsTime_barl_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]=new TH2F(etEtaRefName_barl_Stream.str().c_str(),etEtaRefName_barl_Stream.str().c_str(),100,1312833000.,1314353000.,100,0,1./etEtaRef);
+	 
+
+	 for(int iBinX=1;iBinX<=et_barl_vs_time[iieta][iiphi][iisign]->GetXaxis()->GetNbins();iBinX++){
+	   for(int iBinY=1;iBinY<=et_barl_vs_time[iieta][iiphi][iisign]->GetYaxis()->GetNbins();iBinY++){
+	     et_etaRef_barl_vs_time[iieta][iiphi][iisign]->SetBinContent(iBinX,iBinY,et_barl_vs_time[iieta][iiphi][iisign]->GetBinContent(iBinX,iBinY));
+	   }
+	 }
+	 
+	 delete et_barl_vs_time[iieta][iiphi][iisign];
+	 
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->GetYaxis()->SetTitle("et/et_{|#eta=1|}");
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->GetXaxis()->SetTitle("time");
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->GetXaxis()->SetTimeDisplay(1);
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->GetXaxis()->SetTimeFormat("%d-%m %H:%M");
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->SetMarkerSize(1.);
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->SetMarkerColor(4);
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->SetMarkerStyle(20);
+	 
+	 et_etaRef_barl_vs_time[iieta][iiphi][iisign]->Write();	 
+	 delete et_etaRef_barl_vs_time[iieta][iiphi][iisign];
+       }
+     }
+   }
+
+
+
   
-   lcFile->Write();
-   lcFile->Close();
+   barlfile->Write();
+   barlfile->Close();
 
 }
