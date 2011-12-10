@@ -73,18 +73,7 @@ void plotsVsTimeMacro_barl::Loop()
    TH2F* et_barl_vs_time[kBarlRings][kBarlWedges][kSides];
    TH2F* et_etaRef_barl_vs_time[kBarlRings][kBarlWedges][kSides];
 
-   /*
-   TH2F* lc_endc_vs_time[kBarlRings][kBarlWedges][kSides];
-   TH2F* et_endc_vs_time[kBarlRings][kBarlWedges][kSides];
 
-
-   TH2F* lc_endc_vs_time_positive[kBarlRings][kBarlWedges][kSides];
-   TH2F* et_endc_vs_time_positive[kBarlRings][kBarlWedges][kSides];
-
-
-   TH2F* lc_endc_vs_time_negative[kBarlRings][kBarlWedges][kSides];
-   TH2F* et_endc_vs_time_negative[kBarlRings][kBarlWedges][kSides];
-   */
    cout<<"creating histos"<<endl;
    //   int iisign=0;
    for(int iisign=0;iisign<kSides;iisign++){
@@ -105,39 +94,6 @@ void plotsVsTimeMacro_barl::Loop()
     }
   }
 
-   /*
-   for(int iisign=0;iisign<kSides;iisign++){
-	  for (int ix=0; ix<kEndcWedgesX; ix++) {
-	    for (int iy=0; iy<kEndcWedgesY; iy++) {
-	      stringstream etName_endc_Stream;
-	      etName_endc_Stream<<"etVsTime_endc_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      et_endc_vs_time[ix][iy][iisign]=new TH2F(etName_endc_Stream.str().c_str(),etName_endc_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      stringstream lcName_endc_Stream;
-	      lcName_endc_Stream<<"lcVsTime_endc_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      lc_endc_vs_time[ix][iy][iisign]=new TH2F(lcName_endc_Stream.str().c_str(),lcName_endc_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      
-	      stringstream etName_endc_positive_Stream;
-	      etName_endc_positive_Stream<<"etVsTime_endc_positive_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      et_endc_vs_time_positive[ix][iy][iisign]=new TH2F(etName_endc_positive_Stream.str().c_str(),etName_endc_positive_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      
-	      stringstream lcName_endc_positive_Stream;
-	      lcName_endc_positive_Stream<<"lcVsTime_endc_positive_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      lc_endc_vs_time_positive[ix][iy][iisign]=new TH2F(lcName_endc_positive_Stream.str().c_str(),lcName_endc_positive_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      
-	      stringstream etName_endc_negative_Stream;
-	      etName_endc_negative_Stream<<"etVsTime_endc_negative_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      et_endc_vs_time_negative[ix][iy][iisign]=new TH2F(etName_endc_negative_Stream.str().c_str(),etName_endc_negative_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      
-	      stringstream lcName_endc_negative_Stream;
-	      lcName_endc_negative_Stream<<"lcVsTime_endc_negative_"<<ix+1<<"_"<<iy+1<<"_"<<iisign;
-	      lc_endc_vs_time_negative[ix][iy][iisign]=new TH2F(lcName_endc_negative_Stream.str().c_str(),lcName_endc_negative_Stream.str().c_str(),100,1.,100.,100,1.,100.);
-	      
-
-	    }
-	  }
-   }
-	  
-   */
 
    int etaRef=1;
    float etEtaRef=1;
@@ -160,18 +116,7 @@ void plotsVsTimeMacro_barl::Loop()
        etEtaRef+=et_barl_Branch;
        nEtaRef++;
      }
-     //     lc_endc_vs_time[etaBranch-1][phiBranch-1][theSign]->Fill(xBranch,yBranch,lc_endc_Branch);
-     //     et_endc_vs_time[etaBranch-1][phiBranch-1][theSign]->Fill(xBranch,yBranch,et_endc_Branch);
-     
-     //     if(sign_endc_Branch>0){
-       //   lc_endc_vs_time_positive->Fill(xBranch,yBranch,lc_endc_Branch);
-       // et_endc_vs_time_positive->Fill(xBranch,yBranch,et_endc_Branch);
-       
-     // }else{
-       
-       //lc_endc_vs_time_negative->Fill(xBranch,yBranch,lc_endc_Branch);
-       //et_endc_vs_time_negative->Fill(xBranch,yBranch,et_endc_Branch);
-   // }     
+
    }
      
    cout<<"loop ends"<<endl;    
