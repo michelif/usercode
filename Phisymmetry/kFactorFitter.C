@@ -31,6 +31,7 @@
 #define kBarlWedges 360
 #define kSides 2
 
+
 using namespace std;
 
 void FitKFactors (){
@@ -59,7 +60,7 @@ void FitKFactors (){
 	   exit(0);
 	 }
 	 
-	 while(!fileListK.eof() && sum <3){
+	 while(!fileListK.eof() && sum <138){
 	   string nameFile;
 	   getline(fileListK,nameFile);
 	   TFile * dummyFile=TFile::Open(nameFile.c_str());
@@ -81,11 +82,19 @@ void FitKFactors (){
 	   delete dummyFile;
 	   sum++;
 	   //	   	   cout<<sum<<endl;
-	 }  
+	 } 
+
+ 
 	 kFactorGraph->cd();
+	 TCanvas* c = new TCanvas("RealFluxMinus", "RealFluxMinus");
+	 c->cd();
 	 //	 cout<<"writing"<<endl;
-	 kFactorGraphs_barl[iieta][iiphi][iisign]->Write();
+	 kFactorGraphs_barl[iieta][iiphi][iisign]->Draw("AP");
+	 kFactorGraphs_barl[iieta][iiphi][iisign]->Fit("pol1","Q","");
+
 	 //	cout<<"write ok"<<endl;
+	 c->Close();
+	 kFactorGraphs_barl[iieta][iiphi][iisign]->Write();
 	 delete   kFactorGraphs_barl[iieta][iiphi][iisign];
      }
      }
