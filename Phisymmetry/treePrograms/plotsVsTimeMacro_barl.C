@@ -96,25 +96,30 @@ void plotsVsTimeMacro_barl::Loop()
 
 
    int etaRef=1;
-   float etEtaRef=1;
-   int nEtaRef=1;
+   float etEtaRef=0;
+   int nEtaRef=0;
    
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
      Long64_t ientry = LoadTree(jentry);
      if (ientry < 0) break;
-     nb = fChain->GetEntry(jentry);   nbytes += nb;
+     nb = fChain->GetEntry(jentry); 
+     nbytes += nb;
      // if (Cut(ientry) < 0) continue;
-     if(jentry%10000000==0) std::cout<<jentry<<std::endl;
-     int theSign=etaBranch>0 ? 1:0;
-     int theEta=TMath::Abs(etaBranch);
-     int thePhi=phiBranch;
+     if(jentry%1000000==0) std::cout<<jentry<<std::endl;
+
+     for (int ihit=0;ihit<nhit;++ihit){
+       int theSign=ieta>0 ? 1:0;
+     int theEta=TMath::Abs(ieta[ihit]);
+     int thePhi=iphi[ihit];
      //     cout<<(theEta-1)<<" "<<(thePhi-1)<<" "<<theSign<<endl;
      //     cout<<"lc "<<lc_barl_Branch<<"time "<<unixTime_barl_Branch<<endl;
-     lc_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixTime_barl_Branch,lc_barl_Branch);
-     et_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixTime_barl_Branch,et_barl_Branch);
-     if(theEta == TMath::Abs(etaRef)){
-       etEtaRef+=et_barl_Branch;
+     lc_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixtime,lc_barl[ihit]);
+     et_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixtime,et_barl[ihit]);
+     if(theEta == TMath::Abs(etaRef) && et_barl[ihit] != 0){
+       etEtaRef+=et_barl[ihit];
        nEtaRef++;
+       //       cout<<(theEta)<<" "<<(thePhi)<<" "<<theSign<<" "<<etEtaRef<< endl;
+     }
      }
 
    }
