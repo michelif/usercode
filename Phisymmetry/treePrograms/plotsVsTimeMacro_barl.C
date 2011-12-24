@@ -108,7 +108,7 @@ void plotsVsTimeMacro_barl::Loop()
      if(jentry%1000000==0) std::cout<<jentry<<std::endl;
 
      for (int ihit=0;ihit<nhit;++ihit){
-       int theSign=ieta>0 ? 1:0;
+       int theSign=ieta[ihit]>0 ? 1:0;
      int theEta=TMath::Abs(ieta[ihit]);
      int thePhi=iphi[ihit];
      //     cout<<(theEta-1)<<" "<<(thePhi-1)<<" "<<theSign<<endl;
