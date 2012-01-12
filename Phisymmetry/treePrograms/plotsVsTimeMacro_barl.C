@@ -34,7 +34,7 @@
 #define kSides 2
 #define  kEndcWedgesX  100
 #define  kEndcWedgesY  100
-#define PRECISION 0.005
+#define NHITS 900
 
 using namespace std;
 
@@ -75,10 +75,11 @@ void plotsVsTimeMacro_barl::Loop()
    TH2F* et_etaRef_barl_vs_time[kBarlRings][kBarlWedges][kSides];
 
    TH1F* energy[kBarlRings][kBarlWedges][kSides];
-   int counter[kBarlRings][kBarlWedges][kSides];
+   TH1F* lc[kBarlRings][kBarlWedges][kSides];
    TH1F* counterHisto=new TH1F("counterhisto","counterhisto",500,0,2000);
+   int counter[kBarlRings][kBarlWedges][kSides];
    float unixtimeMean[kBarlRings][kBarlWedges][kSides];
-   int firstTime[kBarlRings][kBarlWedges][kSides];
+
 
    cout<<"creating histos"<<endl;
    //   int iisign=0;
@@ -93,14 +94,19 @@ void plotsVsTimeMacro_barl::Loop()
 
 	  stringstream lcName_barl_Stream;
 	  lcName_barl_Stream<<"lcVsTime_barl_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;                                        
-	  //	  lc_barl_vs_time[iieta][iiphi][iisign]=new TH2F(lcName_barl_Stream.str().c_str(),lcName_barl_Stream.str().c_str(),100,1312833000.,1314353000.,100,0.4,1.6);
+	  lc_barl_vs_time[iieta][iiphi][iisign]=new TH2F(lcName_barl_Stream.str().c_str(),lcName_barl_Stream.str().c_str(),100,1312833000.,1314353000.,100,0.4,1.6);
 
 	  stringstream energyname;
 	  energyname<<"energy_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;                                        
 	  energy[iieta][iiphi][iisign]=new TH1F(energyname.str().c_str(),energyname.str().c_str(),1000, 0.,2.);
 
+	  stringstream lcname;
+	  lcname<<"lc_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;                                        
+	  lc[iieta][iiphi][iisign]=new TH1F(lcname.str().c_str(),lcname.str().c_str(),1000, 0.,2.);
+
+
 	  counter[iieta][iiphi][iisign]=0;
-	  firstTime[iieta][iiphi][iisign]=0;
+
 	  unixtimeMean[iieta][iiphi][iisign]=0;
       }
     }
@@ -126,18 +132,15 @@ void plotsVsTimeMacro_barl::Loop()
        int theSign=ieta[ihit]>0 ? 1:0;
      int theEta=TMath::Abs(ieta[ihit]);
      int thePhi=iphi[ihit];
-     //     cout<<(theEta-1)<<" "<<(thePhi-1)<<" "<<theSign<<endl;
-     //     cout<<"lc "<<lc_barl_Branch<<"time "<<unixTime_barl_Branch<<endl;
-     //     unixtimeHisto->Fill(unixtime);
      unixtimeMean[theEta-1][thePhi-1][theSign]+=unixtime;
      energy[theEta-1][thePhi-1][theSign]->Fill(et_barl[ihit]);
-     if (  counter[theEta-1][thePhi-1][theSign] ==0) firstTime[theEta-1][thePhi-1][theSign]=unixTime;
+     lc[theEta-1][thePhi-1][theSign]->Fill(lc_barl[ihit]);
      counter[theEta-1][thePhi-1][theSign]++;
 
      //check if it is a different inter fill
      if  (TMath::Abs(unixtime-oldtime)>3600) {
        energy[theEta-1][thePhi-1][theSign]->Reset();
-       //     unixtimeHisto->Reset();
+       lc[theEta-1][thePhi-1][theSign]->Reset();
        unixtimeMean[theEta-1][thePhi-1][theSign]=0;
        counter[theEta-1][thePhi-1][theSign]=0;
        //       cout<<"time"<<endl;
@@ -146,13 +149,16 @@ void plotsVsTimeMacro_barl::Loop()
 
 
 
-     if((energy[theEta-1][thePhi-1][theSign]->GetRMS()/sqrt(counter[theEta-1][thePhi-1][theSign]))<PRECISION && counter[theEta-1][thePhi-1][theSign]>10) {
+     if( counter[theEta-1][thePhi-1][theSign]== NHITS) {
        // cout<<counter[theEta-1][thePhi-1][theSign]<<" ";
        //     cout<<(theEta)<<" "<<(thePhi)<<" "<<theSign<<endl;
        //     lc_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixtime,lc_barl[ihit]);
        //       cout<<unixtimeMean[theEta-1][thePhi-1][theSign]/counter[theEta-1][thePhi-1][theSign]<<endl;
+       //       cout<<lc[theEta-1][thePhi-1][theSign]->GetMean()<<endl;
      et_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixtimeMean[theEta-1][thePhi-1][theSign]/counter[theEta-1][thePhi-1][theSign],energy[theEta-1][thePhi-1][theSign]->GetMean());
+     lc_barl_vs_time[theEta-1][thePhi-1][theSign]->Fill(unixtimeMean[theEta-1][thePhi-1][theSign]/counter[theEta-1][thePhi-1][theSign],lc[theEta-1][thePhi-1][theSign]->GetMean());
      energy[theEta-1][thePhi-1][theSign]->Reset();
+     lc[theEta-1][thePhi-1][theSign]->Reset();
      //     unixtimeHisto->Reset();
      unixtimeMean[theEta-1][thePhi-1][theSign]=0;
      counterHisto->Fill(counter[theEta-1][thePhi-1][theSign]);
@@ -175,7 +181,7 @@ void plotsVsTimeMacro_barl::Loop()
    TFile* barlfile=TFile::Open("barrelVsTime.root","recreate");
 
    cout<<"writing lc histos"<<endl;
-   /* for(int iisign=0;iisign<kSides;iisign++){
+    for(int iisign=0;iisign<kSides;iisign++){
      for(int iieta=0;iieta<kBarlRings;iieta++){
        if(iieta%10 ==0)cout<<iieta<<endl;
        for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
@@ -195,7 +201,7 @@ void plotsVsTimeMacro_barl::Loop()
        }
      }
    }
-   */
+   
    cout<<"creating  histos"<<endl;
   
    for(int iisign=0;iisign<kSides;iisign++){
