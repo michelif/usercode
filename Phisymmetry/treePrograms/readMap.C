@@ -120,23 +120,19 @@ void readMap::Loop()
       if( (unixtime -firstUnixTime)>MAXSTOPTIME){
 	if(nhitTot<=NTRIGGERMAX/2){
 	  flagTime=false;
-	  nhitTot=0;
-	  firstRun=0;
-	  firstLumi=0;
-	  lastRun=0;
-	  lastLumi=0;
-	  unixtimeTot=0;
-	  unixtimeMean=0;
-	  counter=0;
-	  firstUnixTime=0;
+		
+
 	  //	  cout<<" resetting"<<endl;
 	}else{
-	  lastRun=dummyLastRun;
-	  lastLumi=dummyLastLumi;
-	  flagTime=true;
-	  nhitTot+=NTRIGGERMAX;
 	  //	  cout<<" flag time "<<lastRun<<endl;
+	  flagTime=true;
+
 	}
+
+	nhitTot+=NTRIGGERMAX;
+	lastRun=dummyLastRun;
+	lastLumi=dummyLastLumi;
+	
 	//	cout<<"in time"<<endl;
       }
 
@@ -157,7 +153,7 @@ void readMap::Loop()
 	//	    cout<<" firstRun "<<oldfirstRun<<" oldlastRun "<<oldlastRun<<" fistLumi "<<oldfirstLumi<<" oldlastLumi "<<oldlastLumi<<" unix time "<<oldunixtimeMean<<" entry "<<jentry<<endl;
 
 	}else{
-	  if(flagTime){
+	  if(!flagTime){
 	    oldlastRun=lastRun;
 	    oldlastLumi=lastLumi;
 	    oldunixtimeMean=(oldunixtimeTot+unixtimeTot)/(oldcounter+counter);
@@ -171,6 +167,10 @@ void readMap::Loop()
 	    oldcounter=0;
 	    oldunixtimeMean=0;
 	  }else{
+	    oldfirstRun=firstRun;
+	    oldfirstLumi=firstLumi;
+	    oldlastRun=lastRun;
+	    oldlastLumi=lastLumi;
 	    outTree->Fill();
 	    //	    cout<<" firstRun "<<oldfirstRun<<" oldlastRun "<<oldlastRun<<" fistLumi "<<oldfirstLumi<<" oldlastLumi "<<oldlastLumi<<" unix time "<<oldunixtimeMean<<" entry "<<jentry<<endl;
 	    oldfirstRun=0;
