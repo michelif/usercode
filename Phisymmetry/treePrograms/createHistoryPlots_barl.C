@@ -32,15 +32,27 @@
 #include <stdlib.h>
 
 
-#define kBarlRings 85
-#define kBarlWedges 180
+
+#define kBarlRings 40
+#define kBarlWedges 20
 #define kSides 1
-#define kIntervals 22
+#define kIntervals 382
+
+#define etaStart 1
+#define phiStart 1
+#define sideStart 1
+
+#define startFromZero true
 /*
 #define kBarlRings 85
 #define kBarlWedges 360
 #define kSides 2
 #define kIntervals 22
+
+#define etaStart 1
+#define phiStart 1
+#define sideStart 1
+#define startFromZero true
 */
 
 vector<unsigned int> frvec;
@@ -103,7 +115,7 @@ void createHistoryPlots_barl::Loop()
 
 
    cout<<"reading the map"<<endl;
-   TFile* f= TFile::Open("readMap_out_barl.root","r");
+   TFile* f= TFile::Open("readMap_out_barl_2011A.root","r");
    TTree* intervalsTree= (TTree*)f->Get("outTree_barl");
 
 
@@ -174,7 +186,7 @@ void createHistoryPlots_barl::Loop()
 
 
    //######### creating the output tree ##############
-   TFile *outFile=TFile::Open("outputForHistory_barl.root","recreate");
+   TFile *outFile=TFile::Open("outputForHistory_barl_2011A.root","recreate");
 
 
 
@@ -205,20 +217,20 @@ void createHistoryPlots_barl::Loop()
      if (ientry < 0) break;
      nb = fChain->GetEntry(jentry);   nbytes += nb;
      // if (Cut(ientry) < 0) continue;
-     if(jentry%1000==0) std::cout<<jentry<<std::endl; 
+     if(jentry%100000==0) std::cout<<jentry<<std::endl; 
 
      //       cout<<"entering if"<<endl;
        int interval=GetInterval(run, lumi);
-       if(interval >0) timeVar=interval;
+       if(interval >0) 	 timeVar=interval;
 
        for (int ihit=0;ihit<nhit;++ihit){
 	 int theSign=ieta[ihit]>0 ? 1:0;
 	 int theEta=TMath::Abs(ieta[ihit]);
 	 int thePhi=iphi[ihit];
-	 if(theSign < kSides && thePhi <kBarlWedges){
+	 if(theSign < kSides && thePhi <kBarlWedges && interval>0 && theEta <kBarlRings){
 	   //	   cout<<et_barl[ihit];
-	 energy[theEta-1][thePhi-1][theSign][interval]->Fill(et_barl[ihit]);
-	 lasercorr[theEta-1][thePhi-1][theSign][interval]->Fill(lc_barl[ihit]);
+	 energy[theEta-1][thePhi-1][theSign][timeVar]->Fill(et_barl[ihit]);
+	 lasercorr[theEta-1][thePhi-1][theSign][timeVar]->Fill(lc_barl[ihit]);
 	 }
        }
 
