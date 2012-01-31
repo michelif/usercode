@@ -33,8 +33,8 @@
 
 
 
-#define kBarlRings 40
-#define kBarlWedges 20
+#define kBarlRings 1
+#define kBarlWedges 360
 #define kSides 1
 #define kIntervals 382
 
@@ -64,19 +64,23 @@ vector<unsigned int> llvec;
 
 int  createHistoryPlots_barl::GetInterval(unsigned int r, unsigned int ls){
   int interval=-100;
-  
-  for(int i=0;i<frvec.size();++i){
-
+  int i=0;
+  while( i <frvec.size()){
+    
     if(r>frvec[i] && r<lrvec[i]){
-
-      //      cout<<"in interval"<<endl;
+      
+ 
       interval =i;
+      i=frvec.size();
+      //      cout<<"in interval "<<interval<<endl;
     } else  if(r ==frvec[i]){
-      if(ls>= flvec[i] ){
+      if(ls>= flvec[i] && ls< flvec[i] ){
 	//        cout<<run<<" "<<ls<< " frvec "<<frvec[i]<<" lrvec "<<lrvec[i]<< " flvec "<<flvec[i]<<" llvec "<<llvec[i]<<endl;  
 	interval=i;
+	i=frvec.size();
       }
-  }
+    }
+    i++;
   }
   return interval;
 
@@ -162,6 +166,7 @@ void createHistoryPlots_barl::Loop()
      for(int iieta=0;iieta<kBarlRings;iieta++){
        if(iieta%10 ==0) cout<<iieta<<endl;
        for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
+	 if(iiphi%30 ==0) cout<<"phi"<<iiphi<<endl;
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
 	  
 	   stringstream energyname;
@@ -186,12 +191,12 @@ void createHistoryPlots_barl::Loop()
 
 
    //######### creating the output tree ##############
-   TFile *outFile=TFile::Open("outputForHistory_barl_2011A.root","recreate");
+   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1_1.root","recreate");
 
 
 
    
-   int timeVar=0,hitVar=0,ietaVar=0,iphiVar=0;
+   int timeVar=0,hitVar=0,ietaVar=0,iphiVar=0,signVar=0;
    float energyVar=0,RMSenergyVar=0,lcVar=0,RMSlcVar=0;
    outFile->cd();
    TTree* outTree= new TTree("tree_barl","tree_barl");
@@ -199,6 +204,7 @@ void createHistoryPlots_barl::Loop()
    outTree->Branch("nHits",&hitVar, "nHits/i");
    outTree->Branch("ieta",&ietaVar,"ieta/I");
    outTree->Branch("iphi",&iphiVar,"iphi/I");
+   outTree->Branch("sign",&signVar,"sign/I");
    outTree->Branch("energy",&energyVar,"energy/F");
    outTree->Branch("RMSMeanEnergy",&RMSenergyVar,"RMSMeanEnergy/F");
    outTree->Branch("lc",&lcVar,"lc/F");
@@ -221,16 +227,18 @@ void createHistoryPlots_barl::Loop()
 
      //       cout<<"entering if"<<endl;
        int interval=GetInterval(run, lumi);
-       if(interval >0) 	 timeVar=interval;
+       int theInterval=-1;
+       if(interval >=0)	 theInterval=interval;
+
 
        for (int ihit=0;ihit<nhit;++ihit){
 	 int theSign=ieta[ihit]>0 ? 1:0;
 	 int theEta=TMath::Abs(ieta[ihit]);
 	 int thePhi=iphi[ihit];
-	 if(theSign < kSides && thePhi <kBarlWedges && interval>0 && theEta <kBarlRings){
+	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theEta <=kBarlRings){
 	   //	   cout<<et_barl[ihit];
-	 energy[theEta-1][thePhi-1][theSign][timeVar]->Fill(et_barl[ihit]);
-	 lasercorr[theEta-1][thePhi-1][theSign][timeVar]->Fill(lc_barl[ihit]);
+	 energy[theEta-1][thePhi-1][theSign][theInterval]->Fill(et_barl[ihit]);
+	 lasercorr[theEta-1][thePhi-1][theSign][theInterval]->Fill(lc_barl[ihit]);
 	 }
        }
 
@@ -249,8 +257,10 @@ void createHistoryPlots_barl::Loop()
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
 	   if(energy[iieta][iiphi][iisign][iinterval]->GetEntries()!=0){
 	     hitVar=energy[iieta][iiphi][iisign][iinterval]->GetEntries();
-	     ietaVar=iieta;
-	     iphiVar=iiphi;
+	     ietaVar=iieta+1;
+	     iphiVar=iiphi+1;
+	     timeVar=iinterval+1;
+	     signVar=iisign;
 	     energyVar=energy[iieta][iiphi][iisign][iinterval]->GetMean();
 	     RMSenergyVar=energy[iieta][iiphi][iisign][iinterval]->GetMeanError();
 	     lcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMean();
