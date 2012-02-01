@@ -81,7 +81,7 @@ void makeMap::Loop()
      nbytes += nb;
      // if (Cut(ientry) < 0) continue;
      
-     if(jentry%100000==0) std::cout<<jentry<<std::endl;
+     if(jentry%1000000==0) std::cout<<jentry<<std::endl;
      
 
      if(theMap[make_pair(run,lumi)].first ==0 ) {
@@ -111,7 +111,7 @@ void makeMap::Loop()
 
 
 
-   TFile * mapFile=TFile::Open("map_barl.root","recreate");
+   TFile * mapFile=TFile::Open("map_barl2011A_5_6_7.root","recreate");
    //   mapFile->cd(); 
    int runBarl,lsBarl,nhitBarl;
    long int unixtimeBarl;
