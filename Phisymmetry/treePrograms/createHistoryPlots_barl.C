@@ -33,9 +33,9 @@
 
 
 
-#define kBarlRings 2
+#define kBarlRings 85
 #define kBarlWedges 360
-#define kSides 1
+#define kSides 2
 #define kIntervals 382
 
 #define etaStart 1
@@ -65,24 +65,36 @@ vector<unsigned int> llvec;
 int  createHistoryPlots_barl::GetInterval(unsigned int r, unsigned int ls){
   int interval=-100;
   int i=0;
-  while( i <frvec.size()){
-    
+  unsigned int dummy =frvec.size();
+  //  cout<<dummy<<endl;
+  while( i <kIntervals){
+    //         cout<<r<<" "<<frvec[i]<<" "<<lrvec[i]<<endl;
     if(r>frvec[i] && r<lrvec[i]){
+      //     if(r>1000 && r<10000000000){
       
- 
-      interval =i;
-      i=frvec.size();
+      return i;
       //      cout<<"in interval "<<interval<<endl;
-    } else  if(r ==frvec[i]){
-      if(ls>= flvec[i] && ls< flvec[i] ){
-	//        cout<<run<<" "<<ls<< " frvec "<<frvec[i]<<" lrvec "<<lrvec[i]<< " flvec "<<flvec[i]<<" llvec "<<llvec[i]<<endl;  
-	interval=i;
-	i=frvec.size();
+    } 
+
+    if(r ==frvec[i] && r != lrvec[i]){
+      if(ls>= flvec[i]  ){
+	return i;	
+      }
+    }
+    if(r ==lrvec[i] && r != frvec[i]){
+      if(ls<= llvec[i] ){
+	return i;	
+      }
+    }
+    if(r ==lrvec[i] && r == frvec[i]){
+      if(ls>= flvec[i]  && ls<=llvec[i]){
+	return i;	
+
       }
     }
     i++;
   }
-  return interval;
+
 
 }
 
@@ -153,12 +165,17 @@ void createHistoryPlots_barl::Loop()
    }
 
 
+   struct histos{
+     float energySum[kBarlRings][kBarlWedges][kSides];
+     float energySquared[kBarlRings][kBarlWedges][kSides];
+     float lasercorrSum[kBarlRings][kBarlWedges][kSides];
+     float lasercorrSquared[kBarlRings][kBarlWedges][kSides];
+     int counter[kBarlRings][kBarlWedges][kSides];
+     
+     //     int   indexinterval;
+   };
 
-   float energySum[kBarlRings][kBarlWedges][kSides][kIntervals];
-   float energySquared[kBarlRings][kBarlWedges][kSides][kIntervals];
-   float lasercorrSum[kBarlRings][kBarlWedges][kSides][kIntervals];
-   float lasercorrSquared[kBarlRings][kBarlWedges][kSides][kIntervals];
-   int counter[kBarlRings][kBarlWedges][kSides][kIntervals];
+   histos* histostruct=(histos*)malloc(kIntervals*sizeof(histos));
 
    /*  
        float   energy[kBarlRings][kBarlWedges][kSides][kIntervals][MAXHITS];
@@ -181,11 +198,11 @@ void createHistoryPlots_barl::Loop()
 	   lasercorr[iieta][iiphi][iisign][iinterval]=new TH1F(lcname.str().c_str(),lcname.str().c_str(),1000, 0.,3.);
 	   */
 
-	   counter[iieta][iiphi][iisign][iinterval]=0;
-	   energySum[iieta][iiphi][iisign][iinterval]=0;
-	   energySquared[iieta][iiphi][iisign][iinterval]=0;
-	   lasercorrSum[iieta][iiphi][iisign][iinterval]=0;
-	   lasercorrSquared[iieta][iiphi][iisign][iinterval]=0;
+	   histostruct[iinterval].counter[iieta][iiphi][iisign]=0;
+	   histostruct[iinterval].energySum[iieta][iiphi][iisign]=0;
+	   histostruct[iinterval].energySquared[iieta][iiphi][iisign]=0;
+	   histostruct[iinterval].lasercorrSum[iieta][iiphi][iisign]=0;
+	   histostruct[iinterval].lasercorrSquared[iieta][iiphi][iisign]=0;
 
 	   // lc[iieta][iiphi][iisign]=0; 
 	   //	 energy[iieta][iiphi][iisign]=0; 
@@ -199,7 +216,7 @@ void createHistoryPlots_barl::Loop()
 
 
    //######### creating the output tree ##############
-   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1_7.root","recreate");
+   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1.root","recreate");
 
 
 
@@ -234,7 +251,9 @@ void createHistoryPlots_barl::Loop()
      if(jentry%100000==0) std::cout<<jentry<<std::endl; 
 
      //       cout<<"entering if"<<endl;
+     //     cout<<run<<" "<<lumi;
        int interval=GetInterval(run, lumi);
+       //      cout<<interval<<endl;
        int theInterval=-1;
        if(interval >=0)	 theInterval=interval;
 
@@ -243,14 +262,14 @@ void createHistoryPlots_barl::Loop()
 	 int theSign=ieta[ihit]>0 ? 1:0;
 	 int theEta=TMath::Abs(ieta[ihit]);
 	 int thePhi=iphi[ihit];
-	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theEta <=kBarlRings){
-	   //	   cout<<et_barl[ihit];
-	 energySum[theEta-1][thePhi-1][theSign][theInterval]+=et_barl[ihit];
-	 energySquared[theEta-1][thePhi-1][theSign][theInterval]+=pow(et_barl[ihit],2);
-	 lasercorrSum[theEta-1][thePhi-1][theSign][theInterval]+=lc_barl[ihit];
-	 lasercorrSquared[theEta-1][thePhi-1][theSign][theInterval]+=pow(lc_barl[ihit],2);
 
-	 counter[theEta-1][thePhi-1][theSign][theInterval]++;
+	 //	 cout<<theEta<<" "<<thePhi<<" "<<theInterval<<" "<<theSign<<endl;
+	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theEta <=kBarlRings){
+	   histostruct[theInterval].energySum[theEta-1][thePhi-1][theSign]+=et_barl[ihit];
+	 histostruct[theInterval].energySquared[theEta-1][thePhi-1][theSign]+=pow(et_barl[ihit],2);
+	 histostruct[theInterval].lasercorrSum[theEta-1][thePhi-1][theSign]+=lc_barl[ihit];
+	 histostruct[theInterval].lasercorrSquared[theEta-1][thePhi-1][theSign]+=pow(lc_barl[ihit],2);
+	 histostruct[theInterval].counter[theEta-1][thePhi-1][theSign]++;
 	 }
        }
 
@@ -267,16 +286,16 @@ void createHistoryPlots_barl::Loop()
        if(iieta%10 ==0) cout<<iieta<<endl;
        for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
-	   if(energySum[iieta][iiphi][iisign][iinterval]>0){
-	     hitVar=counter[iieta][iiphi][iisign][iinterval];
+	   if(histostruct[iinterval].energySum[iieta][iiphi][iisign]>0){
+	     hitVar= histostruct[iinterval].counter[iieta][iiphi][iisign];
 	     ietaVar=iieta+1;
 	     iphiVar=iiphi+1;
 	     timeVar=iinterval+1;
 	     signVar=iisign;
-	     energyVar=energySum[iieta][iiphi][iisign][iinterval];
-	     RMSenergyVar=energySquared[iieta][iiphi][iisign][iinterval];
-	     lcVar=lasercorrSum[iieta][iiphi][iisign][iinterval];
-	     RMSlcVar=lasercorrSquared[iieta][iiphi][iisign][iinterval];
+	     energyVar=histostruct[iinterval].energySum[iieta][iiphi][iisign];
+	     RMSenergyVar=histostruct[iinterval].energySquared[iieta][iiphi][iisign];
+	     lcVar=histostruct[iinterval].lasercorrSum[iieta][iiphi][iisign];
+	     RMSlcVar=histostruct[iinterval].lasercorrSquared[iieta][iiphi][iisign];
 	     //	     lcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMean();
 	     //	     RMSlcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMeanError();
 	     outTree->Fill();
