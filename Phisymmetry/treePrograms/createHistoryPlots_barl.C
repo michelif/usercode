@@ -33,7 +33,7 @@
 
 
 
-#define kBarlRings 1
+#define kBarlRings 2
 #define kBarlWedges 360
 #define kSides 1
 #define kIntervals 382
@@ -154,8 +154,11 @@ void createHistoryPlots_barl::Loop()
 
 
 
-   TH1F* energy[kBarlRings][kBarlWedges][kSides][kIntervals];
-   TH1F* lasercorr[kBarlRings][kBarlWedges][kSides][kIntervals];
+   float energySum[kBarlRings][kBarlWedges][kSides][kIntervals];
+   float energySquared[kBarlRings][kBarlWedges][kSides][kIntervals];
+   float lasercorrSum[kBarlRings][kBarlWedges][kSides][kIntervals];
+   float lasercorrSquared[kBarlRings][kBarlWedges][kSides][kIntervals];
+   int counter[kBarlRings][kBarlWedges][kSides][kIntervals];
 
    /*  
        float   energy[kBarlRings][kBarlWedges][kSides][kIntervals][MAXHITS];
@@ -166,19 +169,24 @@ void createHistoryPlots_barl::Loop()
      for(int iieta=0;iieta<kBarlRings;iieta++){
        if(iieta%10 ==0) cout<<iieta<<endl;
        for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
-	 if(iiphi%30 ==0) cout<<"phi"<<iiphi<<endl;
+	 //	 if(iiphi%30 ==0) cout<<"phi"<<iiphi<<endl;
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
 	  
-	   stringstream energyname;
+	   /*   stringstream energyname;
 	   energyname<<"energy_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign<<"_"<<iinterval;                                        
 	   energy[iieta][iiphi][iisign][iinterval]=new TH1F(energyname.str().c_str(),energyname.str().c_str(),1000, 0.,2.);
 	   
 	   stringstream lcname;
 	   lcname<<"lc_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign<<"_"<<iinterval;                           
 	   lasercorr[iieta][iiphi][iisign][iinterval]=new TH1F(lcname.str().c_str(),lcname.str().c_str(),1000, 0.,3.);
-	   
-	   //lasercorr[iieta][iiphi][iisign][iinterval]=0;
-	   //energy[iieta][iiphi][iisign][iinterval]=0;
+	   */
+
+	   counter[iieta][iiphi][iisign][iinterval]=0;
+	   energySum[iieta][iiphi][iisign][iinterval]=0;
+	   energySquared[iieta][iiphi][iisign][iinterval]=0;
+	   lasercorrSum[iieta][iiphi][iisign][iinterval]=0;
+	   lasercorrSquared[iieta][iiphi][iisign][iinterval]=0;
+
 	   // lc[iieta][iiphi][iisign]=0; 
 	   //	 energy[iieta][iiphi][iisign]=0; 
 	 }
@@ -191,7 +199,7 @@ void createHistoryPlots_barl::Loop()
 
 
    //######### creating the output tree ##############
-   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1_1.root","recreate");
+   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1_7.root","recreate");
 
 
 
@@ -205,10 +213,10 @@ void createHistoryPlots_barl::Loop()
    outTree->Branch("ieta",&ietaVar,"ieta/I");
    outTree->Branch("iphi",&iphiVar,"iphi/I");
    outTree->Branch("sign",&signVar,"sign/I");
-   outTree->Branch("energy",&energyVar,"energy/F");
-   outTree->Branch("RMSMeanEnergy",&RMSenergyVar,"RMSMeanEnergy/F");
-   outTree->Branch("lc",&lcVar,"lc/F");
-   outTree->Branch("RMSMeanLc",&RMSlcVar,"RMSMeanLc/F");
+   outTree->Branch("energySum",&energyVar,"energySum/F");
+   outTree->Branch("energySquared",&RMSenergyVar,"energySquared/F");
+   outTree->Branch("lcSum",&lcVar,"lcSum/F");
+   outTree->Branch("lcSquared",&RMSlcVar,"lcSquared/F");
 
    //######Loop over ntuples###########
    //   float lc[kBarlRings][kBarlWedges][kSides];
@@ -237,8 +245,12 @@ void createHistoryPlots_barl::Loop()
 	 int thePhi=iphi[ihit];
 	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theEta <=kBarlRings){
 	   //	   cout<<et_barl[ihit];
-	 energy[theEta-1][thePhi-1][theSign][theInterval]->Fill(et_barl[ihit]);
-	 lasercorr[theEta-1][thePhi-1][theSign][theInterval]->Fill(lc_barl[ihit]);
+	 energySum[theEta-1][thePhi-1][theSign][theInterval]+=et_barl[ihit];
+	 energySquared[theEta-1][thePhi-1][theSign][theInterval]+=pow(et_barl[ihit],2);
+	 lasercorrSum[theEta-1][thePhi-1][theSign][theInterval]+=lc_barl[ihit];
+	 lasercorrSquared[theEta-1][thePhi-1][theSign][theInterval]+=pow(lc_barl[ihit],2);
+
+	 counter[theEta-1][thePhi-1][theSign][theInterval]++;
 	 }
        }
 
@@ -255,16 +267,18 @@ void createHistoryPlots_barl::Loop()
        if(iieta%10 ==0) cout<<iieta<<endl;
        for(int iiphi=0;iiphi<kBarlWedges;iiphi++){
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
-	   if(energy[iieta][iiphi][iisign][iinterval]->GetEntries()!=0){
-	     hitVar=energy[iieta][iiphi][iisign][iinterval]->GetEntries();
+	   if(energySum[iieta][iiphi][iisign][iinterval]>0){
+	     hitVar=counter[iieta][iiphi][iisign][iinterval];
 	     ietaVar=iieta+1;
 	     iphiVar=iiphi+1;
 	     timeVar=iinterval+1;
 	     signVar=iisign;
-	     energyVar=energy[iieta][iiphi][iisign][iinterval]->GetMean();
-	     RMSenergyVar=energy[iieta][iiphi][iisign][iinterval]->GetMeanError();
-	     lcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMean();
-	     RMSlcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMeanError();
+	     energyVar=energySum[iieta][iiphi][iisign][iinterval];
+	     RMSenergyVar=energySquared[iieta][iiphi][iisign][iinterval];
+	     lcVar=lasercorrSum[iieta][iiphi][iisign][iinterval];
+	     RMSlcVar=lasercorrSquared[iieta][iiphi][iisign][iinterval];
+	     //	     lcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMean();
+	     //	     RMSlcVar=lasercorr[iieta][iiphi][iisign][iinterval]->GetMeanError();
 	     outTree->Fill();
 	     //	     delete energy[iieta][iiphi][iisign][iinterval];   
 	     //	     delete lasercorr[iieta][iiphi][iisign][iinterval];   
