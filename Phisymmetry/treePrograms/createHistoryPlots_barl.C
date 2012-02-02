@@ -38,11 +38,7 @@
 #define kSides 2
 #define kIntervals 382
 
-#define etaStart 1
-#define phiStart 1
-#define sideStart 1
 
-#define startFromZero true
 /*
 #define kBarlRings 85
 #define kBarlWedges 360
@@ -94,7 +90,7 @@ int  createHistoryPlots_barl::GetInterval(unsigned int r, unsigned int ls){
     }
     i++;
   }
-
+      return i;
 
 }
 
@@ -264,12 +260,12 @@ void createHistoryPlots_barl::Loop()
 	 int thePhi=iphi[ihit];
 
 	 //	 cout<<theEta<<" "<<thePhi<<" "<<theInterval<<" "<<theSign<<endl;
-	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theEta <=kBarlRings){
+	 if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theInterval <kIntervals && theEta <=kBarlRings ){
 	   histostruct[theInterval].energySum[theEta-1][thePhi-1][theSign]+=et_barl[ihit];
-	 histostruct[theInterval].energySquared[theEta-1][thePhi-1][theSign]+=pow(et_barl[ihit],2);
-	 histostruct[theInterval].lasercorrSum[theEta-1][thePhi-1][theSign]+=lc_barl[ihit];
-	 histostruct[theInterval].lasercorrSquared[theEta-1][thePhi-1][theSign]+=pow(lc_barl[ihit],2);
-	 histostruct[theInterval].counter[theEta-1][thePhi-1][theSign]++;
+	   histostruct[theInterval].energySquared[theEta-1][thePhi-1][theSign]+=pow(et_barl[ihit],2);
+	   histostruct[theInterval].lasercorrSum[theEta-1][thePhi-1][theSign]+=lc_barl[ihit];
+	   histostruct[theInterval].lasercorrSquared[theEta-1][thePhi-1][theSign]+=pow(lc_barl[ihit],2);
+	   histostruct[theInterval].counter[theEta-1][thePhi-1][theSign]++;
 	 }
        }
 
