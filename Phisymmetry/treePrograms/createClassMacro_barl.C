@@ -13,7 +13,7 @@ std::ifstream fileList("filelist.txt", ios::in);
 
 
 int sum=0;
-while(!fileList.eof() ){
+while(!fileList.eof()){
   string nameFile;
   getline(fileList,nameFile);
   inputChain_barl.Add(nameFile.c_str());

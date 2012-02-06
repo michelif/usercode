@@ -1,8 +1,8 @@
 //////////////////////////////////////////////////////////
 // This class has been automatically generated on
-// Mon Dec  5 16:28:43 2011 by ROOT version 5.27/06b
-// from TTree variablesTree_endc/variablesTree_endc
-// found on file: root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees3/172947_174137/variablesTree_9_1_Ttq.root
+// Wed Dec 21 14:27:33 2011 by ROOT version 5.27/06b
+// from TTree variablesTree_barl/variablesTree_barl
+// found on file: root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees5/172947_174137/variablesTree_100_1_pps.root
 //////////////////////////////////////////////////////////
 
 #ifndef plotsVsTimeMacro_barl_h
@@ -12,40 +12,34 @@
 #include <TChain.h>
 #include <TFile.h>
 
+#define MAXHITS 1000
+
 class plotsVsTimeMacro_barl {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
 
    // Declaration of leaf types
-   Float_t         etaBranch;
-   Float_t         phiBranch;
-   Float_t         lc_barl_Branch;
-   Float_t         et_barl_Branch;
-   Int_t           unixTime_barl_Branch;
-
-   //endcap
-/*    Float_t         xBranch; */
-/*    Float_t         yBranch; */
-/*    Float_t         lc_endc_Branch; */
-/*    Float_t         et_endc_Branch; */
-/*    Int_t           unixTime_endc_Branch; */
-/*    Float_t         sign_endc_Branch; */
+   Int_t          nhit;
+   Int_t           ieta[MAXHITS];   //[nhit]
+   Int_t           iphi[MAXHITS];   //[nhit]
+   Float_t         lc_barl[MAXHITS];   //[nhit]
+   Float_t         et_barl[MAXHITS];   //[nhit]
+   Int_t          unixtime;
+   Int_t          run;
+   Int_t          lumi;
+   Int_t          eventid;
 
    // List of branches
-   TBranch        *b_etaBranch;   //!
-   TBranch        *b_phiBranch;   //!
-   TBranch        *b_lc_barl_Branch;   //!
-   TBranch        *b_et_barl_Branch;   //!
-   TBranch        *b_unixTime_barl_Branch;   //!
-
-   //endcap
-/*    TBranch        *b_xBranch;   //! */
-/*    TBranch        *b_yBranch;   //! */
-/*    TBranch        *b_lc_endc_Branch;   //! */
-/*    TBranch        *b_et_endc_Branch;   //! */
-/*    TBranch        *b_unixTime_endc_Branch;   //! */
-/*    TBranch        *b_sign_endc_Branch;   //! */
+   TBranch        *b_nhit;   //!
+   TBranch        *b_ieta;   //!
+   TBranch        *b_iphi;   //!
+   TBranch        *b_lc_barl;   //!
+   TBranch        *b_et_barl;   //!
+   TBranch        *b_unixtime;   //!
+   TBranch        *b_run;   //!
+   TBranch        *b_lumi;   //!
+   TBranch        *b_eventid;   //!
 
    plotsVsTimeMacro_barl(TTree *tree=0);
    virtual ~plotsVsTimeMacro_barl();
@@ -66,11 +60,11 @@ plotsVsTimeMacro_barl::plotsVsTimeMacro_barl(TTree *tree)
 // if parameter tree is not specified (or zero), connect the file
 // used to generate this class and read the Tree.
    if (tree == 0) {
-      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees3/172947_174137/variablesTree_9_1_Ttq.root");
+      TFile *f = (TFile*)gROOT->GetListOfFiles()->FindObject("root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees5/172947_174137/variablesTree_100_1_pps.root");
       if (!f) {
-         f = new TFile("root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees3/172947_174137/variablesTree_9_1_Ttq.root");
+         f = new TFile("root://eoscms//eos/cms/store/caf/user/micheli/PhiSymmetryJobs/jobsWithTrees5/172947_174137/variablesTree_100_1_pps.root");
       }
-      tree = (TTree*)gDirectory->Get("variablesTree_endc");
+      tree = (TTree*)gDirectory->Get("variablesTree_barl");
 
    }
    Init(tree);
@@ -119,21 +113,15 @@ void plotsVsTimeMacro_barl::Init(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
-   fChain->SetBranchAddress("etaBranch", &etaBranch, &b_etaBranch);
-   fChain->SetBranchAddress("phiBranch", &phiBranch, &b_phiBranch);
-   fChain->SetBranchAddress("lc_barl_Branch", &lc_barl_Branch, &b_lc_barl_Branch);
-   fChain->SetBranchAddress("et_barl_Branch", &et_barl_Branch, &b_et_barl_Branch);
-   fChain->SetBranchAddress("unixTime_barl_Branch", &unixTime_barl_Branch, &b_unixTime_barl_Branch);
-
-/*    fChain->SetBranchAddress("xBranch", &xBranch, &b_xBranch); */
-/*    fChain->SetBranchAddress("yBranch", &yBranch, &b_yBranch); */
-/*    fChain->SetBranchAddress("lc_endc_Branch", &lc_endc_Branch, &b_lc_endc_Branch); */
-/*    fChain->SetBranchAddress("et_endc_Branch", &et_endc_Branch, &b_et_endc_Branch); */
-/*    fChain->SetBranchAddress("unixTime_endc_Branch", &unixTime_endc_Branch, &b_unixTime_endc_Branch); */
-/*    fChain->SetBranchAddress("sign_endc_Branch", &sign_endc_Branch, &b_sign_endc_Branch); */
-
-
-
+   fChain->SetBranchAddress("nhit", &nhit, &b_nhit);
+   fChain->SetBranchAddress("ieta", ieta, &b_ieta);
+   fChain->SetBranchAddress("iphi", iphi, &b_iphi);
+   fChain->SetBranchAddress("lc_barl", lc_barl, &b_lc_barl);
+   fChain->SetBranchAddress("et_barl", et_barl, &b_et_barl);
+   fChain->SetBranchAddress("unixtime", &unixtime, &b_unixtime);
+   fChain->SetBranchAddress("run", &run, &b_run);
+   fChain->SetBranchAddress("lumi", &lumi, &b_lumi);
+   fChain->SetBranchAddress("eventid", &eventid, &b_eventid);
    Notify();
 }
 

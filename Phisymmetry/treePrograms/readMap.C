@@ -28,11 +28,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#define NXTALS 61000
-#define NHITSMAX 1000
-#define NTRIGGERMAX NXTALS*NHITSMAX
-#define MAXSTOPHOURS 12 
-#define MAXSTOPTIME 3600*12
+
 
 using namespace std;
 
@@ -67,27 +63,13 @@ void readMap::Loop()
 
    Long64_t nbytes = 0, nb = 0;
 
-   unsigned long int unixtimeTot=0;
-   long int unixtimeMean=0;
-   int firstRun=0,lastRun=0,firstLumi=0, lastLumi=0, counter=0;
-   float firstUnixTime=0;
+   interval_t currentInterval;
+   currentInterval.nHit=0;
 
-
-   double nhitTot=0;
-   unsigned long int oldunixtimeTot=0;
-   long int oldunixtimeMean=0;
-   int oldfirstRun=0,oldlastRun=0,oldfirstLumi=0, oldlastLumi=0, oldcounter=0;
-   float dummyLastRun=0,dummyLastLumi=0;
-
-   bool flagFirstLoop,flagTime=false;
-
-   TTree* outTree= new TTree("outTree_barl","outTree_barl");
-   outTree->Branch("firstRun",&oldfirstRun,"firstRun/I");
-   outTree->Branch("lastRun",&oldlastRun,"lastRun/I");
-   outTree->Branch("firstLumi",&oldfirstLumi,"firstLumi/I");
-   outTree->Branch("lastLumi",&oldlastLumi,"lastLumi/I");
-   outTree->Branch("unixtimeMean",&oldunixtimeMean,"unixtimeMean/i");
-
+   int fullIntervals=0;
+   int mergedIntervals=0;
+   int shortIntervals=0;
+   int isolatedIntervals=0;
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = LoadTree(jentry);
@@ -95,124 +77,130 @@ void readMap::Loop()
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
 
-      if(nhitTot==0){
+      //Checking quality of LS
+      if (goodLS && !goodLS->isGoodLS(run,ls))
+	continue;
 
-	firstRun=run;
-	//	cout<<" firstrun "<<firstRun<<endl;
-	firstLumi=ls;
-	firstUnixTime=unixtime;
-      }
 
-      nhitTot+=nhit;
-      unixtimeTot+=unixtime;
-      counter++;
-      if(nhit!=0) {
-	dummyLastRun=run;
-	dummyLastLumi=ls;
-      }
+      if(currentInterval.nHit==0)
+	{
+	  //Just define a new interval start
+	  currentInterval.unixTimeMean=(unsigned long long)unixtime*(unsigned long long)nhit;
+	  currentInterval.unixTimeStart=unixtime;
+	  currentInterval.nLS=1;
+	  currentInterval.nHit=nhit;
+	  currentInterval.runStart=run;
+	  currentInterval.lsStart=ls;
+	  currentInterval.runEnd=run;
+	  currentInterval.lsEnd=ls;
+	  currentInterval.unixTimeEnd=unixtime;
+	}
+      else if (currentInterval.nHit+nhit>=NTRIGGERMAX)
+	{
+	  // Enough statistics. Adding as new interval
+	  currentInterval.nHit+=nhit;
+	  currentInterval.nLS++;
+	  currentInterval.runEnd=run;
+	  currentInterval.lsEnd=ls;
+	  currentInterval.unixTimeEnd=unixtime;
+	  currentInterval.unixTimeMean+=(unsigned long long)unixtime*(unsigned long long)nhit;
+	  currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
+	  intervals.push_back(currentInterval);
+	  currentInterval.nHit=0;
+	  fullIntervals++;
+	}
+      else if ((unixtime-currentInterval.unixTimeStart)>MAXSTOPTIME)
+	{
+	  // Case when a too long time elapsed between current LS and interval start time
+	  if (currentInterval.nHit>=NTRIGGERMAX/2)
+	    {
+	      // Enough statistics. Adding as new interval
+	      currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
+	      intervals.push_back(currentInterval);
+	      shortIntervals++;
 
-      if(oldfirstRun==0){
-	flagFirstLoop=true;
-      }else{
-	flagFirstLoop=false;
-      }
-      //	cout<<nhitTot<<endl;      
-      if( (unixtime -firstUnixTime)>MAXSTOPTIME){
-	if(nhitTot<=NTRIGGERMAX/2){
-	  flagTime=false;
-		
+	    }
+	  else
+	    {
+	      interval_t& lastInterval=intervals.back();
+	      if ( (currentInterval.unixTimeEnd - lastInterval.unixTimeStart )<MAXSTOPTIME)
+		{
+		  // Not enough statistics. Still consistent with the last interval, so merge the two intervals
+		  currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
+		  lastInterval.mergeWith(currentInterval);
+		  mergedIntervals++;
+		}
+	      else
+		{
+		  // Too short and too isolated interval. Adding as new interval, but can be dropped if needed
+		  currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
+		  intervals.push_back(currentInterval);
+		  isolatedIntervals++;
+		}
 
-	  //	  cout<<" resetting"<<endl;
-	}else{
-	  //	  cout<<" flag time "<<lastRun<<endl;
-	  flagTime=true;
-
+	    }
+	  //Now setting this run,ls as a new interval start
+	  currentInterval.unixTimeMean=(unsigned long long)unixtime*(unsigned long long)nhit;
+	  currentInterval.unixTimeStart=unixtime;
+	  currentInterval.nLS=1;
+	  currentInterval.nHit=nhit;
+	  currentInterval.runStart=run;
+	  currentInterval.lsStart=ls;
+	  currentInterval.runEnd=run;
+	  currentInterval.lsEnd=ls;
+	  currentInterval.unixTimeEnd=unixtime;
+	}
+      else
+	{
+	  //Not reaching an interval definition condition. Adding this LS to the current intervall
+	  currentInterval.nHit+=nhit;
+	  currentInterval.nLS++;
+	  currentInterval.runEnd=run;
+	  currentInterval.lsEnd=ls;
+	  currentInterval.unixTimeEnd=unixtime;
+	  currentInterval.unixTimeMean=currentInterval.unixTimeMean+ (unsigned long long)unixtime*(unsigned long long)nhit;
 	}
 
-	nhitTot+=NTRIGGERMAX;
-	lastRun=dummyLastRun;
-	lastLumi=dummyLastLumi;
-	
-	//	cout<<"in time"<<endl;
-      }
-
-      if(nhitTot>=NTRIGGERMAX ){
-	//	cout<<" firstrun "<<firstRun<<"nhittot "<<nhitTot<<endl;
-	lastRun=run;
-	lastLumi=ls;
-	unixtimeMean=unixtimeTot/counter;
-
-	if(flagFirstLoop){
-	oldfirstRun=firstRun;
-	oldfirstLumi=firstLumi;
-	oldlastRun=lastRun;
-	oldlastLumi=lastLumi;
-	oldunixtimeTot=unixtimeTot;
-	oldcounter=counter;
-	oldunixtimeMean=unixtimeMean;
-	//	    cout<<" firstRun "<<oldfirstRun<<" oldlastRun "<<oldlastRun<<" fistLumi "<<oldfirstLumi<<" oldlastLumi "<<oldlastLumi<<" unix time "<<oldunixtimeMean<<" entry "<<jentry<<endl;
-
-	}else{
-	  if(!flagTime){
-	    oldlastRun=lastRun;
-	    oldlastLumi=lastLumi;
-	    oldunixtimeMean=(oldunixtimeTot+unixtimeTot)/(oldcounter+counter);
-	    outTree->Fill();
-	    //cout<<" firstRun "<<oldfirstRun<<" oldlastRun "<<oldlastRun<<" fistLumi "<<oldfirstLumi<<" oldlastLumi "<<oldlastLumi<<" unix time "<<oldunixtimeMean<<" entry "<<jentry<<endl;
-	    oldfirstRun=0;
-	    oldfirstLumi=0;
-	    oldlastRun=0;
-	    oldlastLumi=0;
-	    oldunixtimeTot=0;
-	    oldcounter=0;
-	    oldunixtimeMean=0;
-	  }else{
-	    oldfirstRun=firstRun;
-	    oldfirstLumi=firstLumi;
-	    oldlastRun=lastRun;
-	    oldlastLumi=lastLumi;
-	    outTree->Fill();
-	    //	    cout<<" firstRun "<<oldfirstRun<<" oldlastRun "<<oldlastRun<<" fistLumi "<<oldfirstLumi<<" oldlastLumi "<<oldlastLumi<<" unix time "<<oldunixtimeMean<<" entry "<<jentry<<endl;
-	    oldfirstRun=0;
-	    oldfirstLumi=0;
-	    oldlastRun=0;
-	    oldlastLumi=0;
-	    oldunixtimeTot=0;
-	    oldcounter=0;
-	    oldunixtimeMean=0;
-	  }
-
-	}
-
-
-	nhitTot=0;
-	firstRun=0;
-	firstLumi=0;
-	lastRun=0;
-	lastLumi=0;
-	unixtimeTot=0;
-	unixtimeMean=0;
-	counter=0;
-	firstUnixTime=0;
-      }
-      if(jentry == (nentries -1)){
-	lastRun=run;
-	lastLumi=ls;
-	unixtimeMean=unixtimeTot/counter;
-	oldfirstRun=firstRun;
-	oldfirstLumi=firstLumi;
-	oldlastRun=lastRun;
-	oldlastLumi=lastLumi;
-	oldunixtimeTot=unixtimeTot;
-	oldcounter=counter;
-	oldunixtimeMean=unixtimeMean;
-	outTree->Fill();
-	   
-      }
    }
 
-   TFile* outFile= TFile::Open("readMap_out_barl.root","recreate");
+   std::cout << "FOUND " << intervals.size() << " NEW INTERVALS " << std::endl;
+   std::cout << "FULL INTERVALS " << fullIntervals << " OF WHICH " << mergedIntervals << " HAVE BEEN EXTENDED" << std::endl;
+   std::cout << "SHORTER INTERVALS " << shortIntervals << std::endl;
+   std::cout << "ISOLATED INTERVALS " << isolatedIntervals << std::endl;
+
+   TFile* outFile= TFile::Open("readMap_out_barl_2011A_new.root","recreate");
    outFile->cd();
+   TTree* outTree= new TTree("outTree_barl","outTree_barl");
+
+   int indexVar,oldfirstRun,oldlastRun,oldfirstLumi,oldlastLumi,oldunixtimeStart,oldunixtimeEnd,oldunixtimeMean,nHit,nLS;
+
+   outTree->Branch("index",&indexVar,"index/I"); 
+   outTree->Branch("nHit",&nHit,"nHit/I"); 
+   outTree->Branch("nLS",&nLS,"nLS/I"); 
+   outTree->Branch("firstRun",&oldfirstRun,"firstRun/I");
+   outTree->Branch("lastRun",&oldlastRun,"lastRun/I");
+   outTree->Branch("firstLumi",&oldfirstLumi,"firstLumi/I");
+   outTree->Branch("lastLumi",&oldlastLumi,"lastLumi/I");
+   outTree->Branch("unixtimeStart",&oldunixtimeStart,"unixtimeStart/i");
+   outTree->Branch("unixtimeEnd",&oldunixtimeEnd,"unixtimeEnd/i");
+   outTree->Branch("unixtimeMean",&oldunixtimeMean,"unixtimeMean/i");
+
+   //Filling the tree
+   for (unsigned int i=0;i<intervals.size();++i)
+     {
+       indexVar=i;
+       oldfirstRun=intervals[i].runStart;
+       oldfirstLumi=intervals[i].lsStart;
+       oldunixtimeStart=intervals[i].unixTimeStart;
+       oldlastRun=intervals[i].runEnd;
+       oldlastLumi=intervals[i].lsEnd;
+       oldunixtimeEnd=intervals[i].unixTimeEnd;
+       oldunixtimeMean=intervals[i].unixTimeMean;
+       nHit=intervals[i].nHit;
+       nLS=intervals[i].nLS;
+       outTree->Fill();
+     }
+
    outTree->Write();
    outFile->Write();
    outFile->Close();

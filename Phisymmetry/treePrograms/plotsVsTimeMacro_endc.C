@@ -34,6 +34,7 @@
 #define kSides 2
 #define  kEndcWedgesX  100
 #define  kEndcWedgesY  100
+#define NHITS 900
 
 using namespace std;
 
@@ -72,9 +73,14 @@ void plotsVsTimeMacro_endc::Loop()
 
    TH2F* lc_endc_vs_time[kEndcWedgesX][kEndcWedgesY][kSides];
    TH2F* et_endc_vs_time[kEndcWedgesX][kEndcWedgesY][kSides];
-
-
    TH2F* et_etaRef_endc_vs_time[kEndcWedgesX][kEndcWedgesY][kSides];
+
+   TH1F* energy[kEndcWedgesX][kEndcWedgesY][kSides];
+   TH1F* lc[kEndcWedgesX][kEndcWedgesY][kSides];
+   TH1F* counterHisto=new TH1F("counterhisto","counterhisto",500,0,2000);
+   int counter[kEndcWedgesX][kEndcWedgesY][kSides];
+   float unixtimeMean[kEndcWedgesX][kEndcWedgesY][kSides];
+
 
    cout<<"creating histos"<<endl;
    //   int iisign=0;
@@ -88,33 +94,82 @@ void plotsVsTimeMacro_endc::Loop()
 	      et_endc_vs_time[iix][iiy][iisign]=new TH2F(etName_endc_Stream.str().c_str(),etName_endc_Stream.str().c_str(),100,1312833000.,1314353000.,100,0,1);
 	      stringstream lcName_endc_Stream;
 	      lcName_endc_Stream<<"lcVsTime_endc_"<<iix+1<<"_"<<iiy+1<<"_"<<iisign;
-	      lc_endc_vs_time[iix][iiy][iisign]=new TH2F(lcName_endc_Stream.str().c_str(),lcName_endc_Stream.str().c_str(),100,1312833000.,1314353000.,100,0.4,1.6);
+	           lc_endc_vs_time[iix][iiy][iisign]=new TH2F(lcName_endc_Stream.str().c_str(),lcName_endc_Stream.str().c_str(),100,1312833000.,1314353000.,100,0.3,1.7);
+
+	      stringstream energyname;
+	      energyname<<"energy_"<<iix+1<<"_"<<iiy+1<<"_"<<iisign;                                        
+	      energy[iix][iiy][iisign]=new TH1F(energyname.str().c_str(),energyname.str().c_str(),1000, 0.,2.);
+	      
+	      stringstream lcname;
+	      lcname<<"lc_"<<iix+1<<"_"<<iiy+1<<"_"<<iisign;                                        
+	      lc[iix][iiy][iisign]=new TH1F(lcname.str().c_str(),lcname.str().c_str(),1000, 0.,2.);
+	      
+	      
+	      counter[iix][iiy][iisign]=0;
+	      
+	      unixtimeMean[iix][iiy][iisign]=0;
+
+
 	      
 	    }
 	  }
    }
 	  
 
-
+   float oldtime=0;
    
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
      Long64_t ientry = LoadTree(jentry);
      if (ientry < 0) break;
      nb = fChain->GetEntry(jentry);   nbytes += nb;
      // if (Cut(ientry) < 0) continue;
-     if(jentry%10000000==0) std::cout<<jentry<<std::endl;
+     if(jentry%100000==0) std::cout<<jentry<<std::endl;
 
      for (int ihit=0;ihit<nhit;++ihit){
 
        int theSign=sign[ihit];
      int theX=ix[ihit];
      int theY=iy[ihit];
-     //            cout<<(theX)<<" "<<(theY)<<" "<<theSign<<endl;
-     //   cout<<"lc "<<lc_endc_Branch<<"time "<<unixTime_endc_Branch<<endl;
+     //                cout<<(theX)<<" "<<(theY)<<" "<<theSign<<endl;
+     //        cout<<"lc "<<lc_endc[ihit]<<"time "<<unixtime<<endl;
      lc_endc_vs_time[theX-1][theY-1][theSign]->Fill(unixtime,lc_endc[ihit]);
      et_endc_vs_time[theX-1][theY-1][theSign]->Fill(unixtime,et_endc[ihit]);
+     unixtimeMean[theX-1][theY-1][theSign]+=unixtime;
+     energy[theX-1][theY-1][theSign]->Fill(et_endc[ihit]);
+     lc[theX-1][theY-1][theSign]->Fill(lc_endc[ihit]);
+     counter[theX-1][theY-1][theSign]++;
+
+     //check if it is a different inter fill
+     if  (TMath::Abs(unixtime-oldtime)>3600) {
+       energy[theX-1][theY-1][theSign]->Reset();
+       lc[theX-1][theY-1][theSign]->Reset();
+       unixtimeMean[theX-1][theY-1][theSign]=0;
+       counter[theX-1][theY-1][theSign]=0;
+       //       cout<<"time"<<endl;
      }
- 
+     
+
+
+
+     if( counter[theX-1][theY-1][theSign]== NHITS) {
+       // cout<<counter[theX-1][theY-1][theSign]<<" ";
+       //            cout<<(theX)<<" "<<(theY)<<" "<<theSign<<endl;
+       //     lc_barl_vs_time[theX-1][theY-1][theSign]->Fill(unixtime,lc_barl[ihit]);
+       //       cout<<unixtimeMean[theX-1][theY-1][theSign]/counter[theX-1][theY-1][theSign]<<endl;
+       //       cout<<lc[theX-1][theY-1][theSign]->GetMean()<<endl;
+            et_endc_vs_time[theX-1][theY-1][theSign]->Fill(unixtimeMean[theX-1][theY-1][theSign]/counter[theX-1][theY-1][theSign],energy[theX-1][theY-1][theSign]->GetMean());
+          lc_endc_vs_time[theX-1][theY-1][theSign]->Fill(unixtimeMean[theX-1][theY-1][theSign]/counter[theX-1][theY-1][theSign],lc[theX-1][theY-1][theSign]->GetMean());
+     energy[theX-1][theY-1][theSign]->Reset();
+     lc[theX-1][theY-1][theSign]->Reset();
+     //     unixtimeHisto->Reset();
+     unixtimeMean[theX-1][theY-1][theSign]=0;
+     counterHisto->Fill(counter[theX-1][theY-1][theSign]);
+     
+     counter[theX-1][theY-1][theSign]=0;
+     }
+
+     }
+     oldtime=unixtime;
    }
      
    cout<<"loop ends"<<endl;    
@@ -122,7 +177,7 @@ void plotsVsTimeMacro_endc::Loop()
    TFile* endcfile=TFile::Open("endcVsTime.root","recreate");
 
    cout<<"writing lc histos"<<endl;
-   for(int iisign=0;iisign<kSides;iisign++){
+      for(int iisign=0;iisign<kSides;iisign++){
      for(int iix=0;iix<kEndcWedgesX;iix++){
        if(iix%10 ==0)cout<<iix<<endl;
        for(int iiy=0;iiy<kEndcWedgesY;iiy++){
@@ -181,9 +236,9 @@ void plotsVsTimeMacro_endc::Loop()
      }
    }
 
+   
 
-
-  
+   counterHisto->Write();  
    endcfile->Write();
    endcfile->Close();
 

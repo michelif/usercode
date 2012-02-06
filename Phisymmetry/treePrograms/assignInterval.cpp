@@ -119,7 +119,7 @@ void createHistoryPlots_barl::Loop(JSON jsonFile)
 
 
    cout<<"reading the map"<<endl;
-   TFile* f= TFile::Open("readMap_out_barl_2011A.root","r");
+   TFile* f= TFile::Open("readMap_out_barl_2011A_new.root","r");
    TTree* intervalsTree= (TTree*)f->Get("outTree_barl");
 
 
@@ -204,7 +204,7 @@ void createHistoryPlots_barl::Loop(JSON jsonFile)
 
 
    //######### creating the output tree ##############
-   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_1withJSON.root","recreate");
+   TFile *outFile=TFile::Open("outputForHistory_barl_2011A_5.root","recreate");
 
 
 
@@ -307,7 +307,7 @@ int main(){
   TChain inputChain_barl("variablesTree_barl");
 
   
-  std::ifstream fileList("filelist2011A_1.txt", ios::in);
+  std::ifstream fileList("filelist2011A_5.txt", ios::in);
 
   if (!fileList.is_open()) {
     cout<<"file not found"<<endl;
@@ -316,7 +316,7 @@ int main(){
   
 
   int sum=0;
-  while(!fileList.eof() && sum<10){
+  while(!fileList.eof()){
     string nameFile;
     getline(fileList,nameFile);
     inputChain_barl.Add(nameFile.c_str());
