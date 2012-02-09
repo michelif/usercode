@@ -1,7 +1,17 @@
 {
-  bool doAlsoTTPlots=false;
-  TFile *_file0 = TFile::Open("histories_RUN2011ABnew_etaRing.root");
-  if (doAlsoTTPlots)TFile *_file1 = TFile::Open("histories_RUN2011ABnew_itt.root");
+  bool doAlsoTTPlots=true;
+  bool quickTest=false;
+  bool savePlots=false;
+  int nRings=85;
+  int nTowers=36*68;
+  if (quickTest)
+    {
+      nRings=5;
+      nTowers=10;
+    }
+
+  TFile *_file0 = TFile::Open("histories_RUN2011ABnew2_etaRing.root");
+  if (doAlsoTTPlots)TFile *_file1 = TFile::Open("histories_RUN2011ABnew2_itt.root");
 //   TDatime T0(2012,03,01,00,00,00);
 //   int X0 = T0.Convert();
 //   TDatime T1(2012,09,01,00,00,00);
@@ -14,6 +24,7 @@
 //2011B boundaries
 //  int X0=1315200000;
 //  int X1=1320000000;
+
   
   int X0=1300000000+86400*25;
   int X1=1320105600+86400*4;
@@ -26,7 +37,11 @@
   b.GetXaxis()->SetTimeDisplay(1);
   b.GetXaxis()->SetTimeFormat("%d\/%m");
 
-  TGraph* lc=(TGraph*)_file0->Get("lc_ieta_1_side_0");
+  gStyle->SetOptFit(111111);
+  TH2F a("a","a",10,0.945,1.015,10,0.945,1.015); //CAMBIARE
+  //  TH2F a("a","a",10,0.95,1.03,10,0.95,1.03); 
+
+  TGraphErrors* lc=(TGraphErrors*)_file0->Get("lc_ieta_1_side_0");
   int npoints=lc->GetN();
   double X[npoints];
   double errorlX[npoints];
@@ -40,6 +55,10 @@
   TH1F* etDist[npoints];
   TH1F* etNoCorrDist[npoints];
 
+  TH1F ringAlpha("ringAlpha","ringAlpha",300,0.7,1.3);
+  TH1F ringAlphaVsEta("ringAlphaVsEta","ringAlphaVsEta",171,-85.5,85.5);
+  TH1F ttAlpha("ttAlpha","ttAlpha",350,0.7,1.4);
+  TH2F ttAlphaMap("ttAlphaMap","ttAlphaMap",72,0.5,72.5,35,-17.5,17.5);
 
   for (int ii=0;ii<npoints;++ii)
     {
@@ -53,7 +72,7 @@
       etNoCorrDist[ii]=new TH1F("etNoCorrDist_"+label,"etNoCorrDist_"+label,200,0.9,1.1);
     }
 
-  for (int i=1;i<86;++i)
+  for (int i=1;i<nRings+1;++i)
     {
       for (int j=0;j<2;j++){
 	TString etaLabel="ieta_";
@@ -63,9 +82,10 @@
 	TString eta="";
 	eta+=i;
 
-	TGraph* lc=(TGraph*)_file0->Get("lc_"+etaLabel+sideLabel);
-	TGraph* et=(TGraph*)_file0->Get("et_"+etaLabel+sideLabel);
-	TGraph* etNoCorr=(TGraph*)_file0->Get("etNoCorr_"+etaLabel+sideLabel);
+	TGraphErrors* lc=(TGraphErrors*)_file0->Get("lc_"+etaLabel+sideLabel);
+	TGraphErrors* et=(TGraphErrors*)_file0->Get("et_"+etaLabel+sideLabel);
+	TGraphErrors* etNoCorr=(TGraphErrors*)_file0->Get("etNoCorr_"+etaLabel+sideLabel);
+	TGraphErrors* EtNoCorrvsLC= (TGraphErrors*)_file0->Get("EtNoCorrvsLC_"+etaLabel+sideLabel);
 
 	for (int ii=0;ii<npoints;++ii)
 	  {
@@ -77,16 +97,17 @@
 	b.Draw();
 	lc->SetMarkerColor(1);
 	lc->SetMarkerStyle(20);
-	lc->SetMarkerSize(0.5);
+	lc->SetMarkerSize(0.7);
+	lc->SetLineWidth(2);
 	et->SetMarkerColor(kRed);
 	et->SetMarkerStyle(20);
 	et->SetMarkerSize(0.5);
 	etNoCorr->SetMarkerColor(kViolet);
 	etNoCorr->SetMarkerStyle(20);
 	etNoCorr->SetMarkerSize(0.5);
-	lc->Draw("PSAME");
 	et->Draw("PSAME");
 	etNoCorr->Draw("PSAME");
+	lc->Draw("PLSAME");
 	TLine* line=new TLine(X0,1,X1,1);
 	line->Draw("same");
 	TLegend l(0.55,0.75,0.8,0.88);
@@ -98,9 +119,48 @@
 	l.AddEntry(etNoCorr,"<et uncorrected> i#eta("+eta+")","P");
 	l.Draw();
 	std::cout <<  "monitor_"+etaLabel+sideLabel+".png" << std::endl;
-	c1->SaveAs("monitor_"+etaLabel+sideLabel+".png");
+	if (savePlots)
+	  c1->SaveAs("monitor_"+etaLabel+sideLabel+".png");
+	a.Draw();
+	a.GetYaxis()->SetTitle("<et UnCorrected>");
+	a.GetXaxis()->SetTitle("1/<lc>");
+	EtNoCorrvsLC->SetMarkerColor(kViolet);
+	EtNoCorrvsLC->SetMarkerStyle(20);
+	EtNoCorrvsLC->SetMarkerSize(0.5);
+	EtNoCorrvsLC->Fit("pol1","","",0.9,1.01);
+	ringAlpha.Fill(EtNoCorrvsLC->GetFunction("pol1")->GetParameter(1));
+	int etaIndex=0;
+	if (j==0)
+	  etaIndex=85-i;
+	else
+	  etaIndex=86+i;
+	ringAlphaVsEta.SetBinContent(etaIndex+1,EtNoCorrvsLC->GetFunction("pol1")->GetParameter(1));
+	ringAlphaVsEta.SetBinError(etaIndex+1,EtNoCorrvsLC->GetFunction("pol1")->GetParError(1));
+	EtNoCorrvsLC->Draw("PESAME");
+	if (savePlots)
+	  c1->SaveAs("EtNoCorrvsLC"+etaLabel+sideLabel+".png");
       }
     }
+
+  gStyle->SetOptStat(1111);
+  ringAlpha.GetXaxis()->SetTitle("alpha correction");
+  ringAlpha.Draw();
+  ringAlpha.SaveAs("ringAlpha.root");
+  if (savePlots)
+    c1->SaveAs("ringAlpha.png");
+
+  gStyle->SetOptStat(0);
+  ringAlphaVsEta.GetXaxis()->SetTitle("ring index");
+  ringAlphaVsEta.GetYaxis()->SetTitle("alpha correction");
+  std::cout << ringAlphaVsEta.GetBinContent(ringAlphaVsEta.GetMaximumBin())*1.3 << std::endl;
+  ringAlphaVsEta.SetMaximum(ringAlphaVsEta.GetBinContent(ringAlphaVsEta.GetMaximumBin())*1.2);
+  ringAlphaVsEta.SetMinimum(0.8);
+  ringAlphaVsEta.SetMarkerStyle(20);
+  ringAlphaVsEta.SetMarkerSize(0.7);
+  ringAlphaVsEta.Draw("E");
+  ringAlphaVsEta.SaveAs("ringAlphaVsEta.root");
+  if (savePlots)
+    c1->SaveAs("ringAlphaVsEta.png");
 
   double quantiles[5]={0.01,0.16,0.5,0.84,0.99};
 
@@ -160,8 +220,8 @@
   lc68Graph->SetMarkerSize(0.4);
   lc68Graph->Draw("2same");
   lc68Graph->Draw("pxsame");
-
-  c1->SaveAs("lcGraph.png");
+  if (savePlots)
+    c1->SaveAs("lcGraph.png");
 
 
   c.Draw();
@@ -177,7 +237,8 @@
   et68Graph->Draw("2same");
   et68Graph->Draw("pxsame");
 
-  c1->SaveAs("etGraph.png");
+  if (savePlots)
+    c1->SaveAs("etGraph.png");
 
 
   c.Draw();
@@ -193,7 +254,8 @@
   etNoCorr68Graph->Draw("2same");
   etNoCorr68Graph->Draw("pxsame");
 
-  c1->SaveAs("etNoCorrGraph.png");
+  if (savePlots)
+    c1->SaveAs("etNoCorrGraph.png");
 
 
   c.Draw();
@@ -226,19 +288,21 @@
   etNoCorr68Graph->SetMarkerSize(0.4);
   etNoCorr68Graph->Draw("pxsame");
 
-  c1->SaveAs("fullHistory.png");
+  if (savePlots)
+    c1->SaveAs("fullHistory.png");
 
   if(doAlsoTTPlots){
-  for (int i=1;i<36*68;++i)
+  for (int i=1;i<nTowers;++i)
     {
        TString ittLabel="itt_";
        ittLabel+=i;
        TString itt="";
        itt+=i;
 
-       TGraph* lc=(TGraph*)_file1->Get("lc_"+ittLabel);
-       TGraph* et=(TGraph*)_file1->Get("et_"+ittLabel);
-       TGraph* etNoCorr=(TGraph*)_file1->Get("etNoCorr_"+ittLabel);
+       TGraphErrors* lc=(TGraphErrors*)_file1->Get("lc_"+ittLabel);
+       TGraphErrors* et=(TGraphErrors*)_file1->Get("et_"+ittLabel);
+       TGraphErrors* etNoCorr=(TGraphErrors*)_file1->Get("etNoCorr_"+ittLabel);
+       TGraphErrors* EtNoCorrvsLC= (TGraphErrors*)_file1->Get("EtNoCorrvsLC_"+ittLabel);
 
        for (int ii=0;ii<npoints;++ii)
 	 {
@@ -250,16 +314,19 @@
        b.Draw();
        lc->SetMarkerColor(1);
        lc->SetMarkerStyle(20);
-       lc->SetMarkerSize(0.5);
+       lc->SetMarkerSize(0.7);
+       lc->SetLineWidth(2);
        et->SetMarkerColor(kRed);
        et->SetMarkerStyle(20);
        et->SetMarkerSize(0.5);
        etNoCorr->SetMarkerColor(kViolet);
        etNoCorr->SetMarkerStyle(20);
        etNoCorr->SetMarkerSize(0.5);
-       lc->Draw("PSAME");
        et->Draw("PSAME");
        etNoCorr->Draw("PSAME");
+       lc->Draw("PLSAME");
+       TLine* line=new TLine(X0,1,X1,1);
+       line->Draw("same");
        TLegend l(0.45,0.75,0.91,0.88);
        l.SetTextSize(0.033);
        l.SetBorderSize(0);
@@ -269,8 +336,52 @@
        l.AddEntry(etNoCorr,"<et uncorrected> itt("+itt+")","P");
        l.Draw();
        std::cout <<  "monitor_"+ittLabel+".png" << std::endl;
-       c1->SaveAs("monitor_"+ittLabel+".png");
+       if (savePlots)
+	 c1->SaveAs("monitor_"+ittLabel+".png");
+       a.Draw();
+       a.GetYaxis()->SetTitle("<et UnCorrected>");
+       a.GetXaxis()->SetTitle("1/<lc>");
+       EtNoCorrvsLC->SetMarkerColor(kViolet);
+       EtNoCorrvsLC->SetMarkerStyle(20);
+       EtNoCorrvsLC->SetMarkerSize(0.5);
+       EtNoCorrvsLC->Fit("pol1","","",0.9,1.01);
+       ttAlpha.Fill(EtNoCorrvsLC->GetFunction("pol1")->GetParameter(1));
+       int etaIndex=0;
+       int phiIndex=0;
+       int smIndex=(i-1)/68+1;
+       int ttIndex=(i-1)%68+1;
+       if (smIndex>18)
+	 {
+	   etaIndex=17-((ttIndex-1)/4+1)+1;
+	 }
+       else
+	 {
+	   etaIndex=17+((ttIndex-1)/4+1)+1;
+	 }
+       phiIndex=(((smIndex-1)%18)*4)+((ttIndex-1)%4+1);
+       std::cout << "i " << " " << smIndex << " " << ttIndex << " " << etaIndex << " " << phiIndex << std::endl;
+       ttAlphaMap.SetBinContent(phiIndex,etaIndex,EtNoCorrvsLC->GetFunction("pol1")->GetParameter(1));
+       ttAlphaMap.SetBinError(phiIndex,etaIndex,EtNoCorrvsLC->GetFunction("pol1")->GetParError(1));
+       EtNoCorrvsLC->Draw("PESAME");
+       if (savePlots)
+	 c1->SaveAs("EtNoCorrvsLC"+ittLabel+".png");
     }
+
+  gStyle->SetOptStat(1111);
+  ttAlpha.GetXaxis()->SetTitle("alpha correction");
+  ttAlpha.Draw();
+  ttAlpha.SaveAs("ttAlpha.root");
+  if (savePlots)
+    c1->SaveAs("ttAlpha.png");
+
+  gStyle->SetOptStat(0);
+  ttAlphaMap.GetXaxis()->SetTitle("tt phi index");
+  ttAlphaMap.GetYaxis()->SetTitle("tt eta index");
+  ttAlphaMap.GetZaxis()->SetRangeUser(1.0,1.3);
+  ttAlphaMap.Draw("COLZ");
+  ttAlphaMap.SaveAs("ttAlphaMap.root");
+  if (savePlots)
+    c1->SaveAs("ttAlphaMap.png");
 
   for (int ii=0;ii<npoints;++ii)
     {
@@ -324,7 +435,8 @@
   lc68Graph->Draw("2same");
   lc68Graph->Draw("pxsame");
 
-  c1->SaveAs("lcGraph_itt.png");
+  if (savePlots)
+    c1->SaveAs("lcGraph_itt.png");
 
 
   c.Draw();
@@ -340,7 +452,8 @@
   et68Graph->Draw("2same");
   et68Graph->Draw("pxsame");
 
-  c1->SaveAs("etGraph_itt.png");
+  if (savePlots)
+    c1->SaveAs("etGraph_itt.png");
 
 
   c.Draw();
@@ -356,7 +469,8 @@
   etNoCorr68Graph->Draw("2same");
   etNoCorr68Graph->Draw("pxsame");
 
-  c1->SaveAs("etNoCorrGraph_itt.png");
+  if (savePlots)
+    c1->SaveAs("etNoCorrGraph_itt.png");
 
 
   c.Draw();
@@ -389,6 +503,7 @@
   etNoCorr68Graph->SetMarkerSize(0.4);
   etNoCorr68Graph->Draw("pxsame");
 
-  c1->SaveAs("fullHistory_itt.png");
+  if (savePlots)
+    c1->SaveAs("fuxllHistory_itt.png");
   }
 }
