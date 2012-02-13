@@ -50,7 +50,7 @@ void makeControlPlots::Loop()
 //    ientry for TTree::GetEntry and TBranch::GetEntry
 //
 //       To read only selected branches, Insert statements like:
-// METHOD1:
+// METAHOD1:
 //    fChain->SetBranchStatus("*",0);  // disable all branches
 //    fChain->SetBranchStatus("branchname",1);  // activate branchname
 // METHOD2: replace line
@@ -81,6 +81,10 @@ void makeControlPlots::Loop()
       // if (Cut(ientry) < 0) continue;
       controls[time_interval-1].counter++;
       int tt=iTT(ieta,iphi,sign);
+      int xtal=iXtal(ieta,iphi,sign);
+      RMSet=RMSet*errEtCorr_factor;
+      RMSetNoCorr=RMSetNoCorr*errEtCorr_factor;
+      //Histories by eta ring
       controls[time_interval-1].nhitMean[ieta-1][sign]+=nHits;
       controls[time_interval-1].etMean[ieta-1][sign]+=et;
       controls[time_interval-1].etMeanRMS[ieta-1][sign]+=nHits*pow(RMSet,2);
@@ -88,7 +92,11 @@ void makeControlPlots::Loop()
       controls[time_interval-1].etMeanNoCorrRMS[ieta-1][sign]+=nHits*pow(RMSetNoCorr,2);
       controls[time_interval-1].lcMean[ieta-1][sign]+=lc;
       controls[time_interval-1].lcMeanRMS[ieta-1][sign]+=nHits*pow(RMSlc,2);
+      controls[time_interval-1].tlMean[ieta-1][sign]+=TMath::Exp(-1*TMath::Log(lc)/alphaDB(sign,ieta,iphi));
+      controls[time_interval-1].tlMeanRMS[ieta-1][sign]+=nHits*pow(RMSlc*alphaDB(sign,ieta,iphi),2); //approximation
       controls[time_interval-1].counterEta[ieta-1][sign]++;
+
+      //Histories by tt
       controls[time_interval-1].nhitTowerMean[tt-1]+=nHits;
       controls[time_interval-1].etTowerMean[tt-1]+=et;
       controls[time_interval-1].etTowerMeanRMS[tt-1]+=nHits*pow(RMSet,2);
@@ -96,7 +104,21 @@ void makeControlPlots::Loop()
       controls[time_interval-1].etTowerMeanNoCorrRMS[tt-1]+=nHits*pow(RMSetNoCorr,2);
       controls[time_interval-1].lcTowerMean[tt-1]+=lc;
       controls[time_interval-1].lcTowerMeanRMS[tt-1]+=nHits*pow(RMSlc,2);
+      controls[time_interval-1].tlTowerMean[tt-1]+=TMath::Exp(-1*TMath::Log(lc)/alphaDB(sign,ieta,iphi));
+      controls[time_interval-1].tlTowerMeanRMS[tt-1]+=nHits*pow(RMSlc*alphaDB(sign,ieta,iphi),2);
       controls[time_interval-1].counterTower[tt-1]++;
+
+      //Histories by xtal
+      controls[time_interval-1].nhitXtalMean[xtal-1]+=nHits;
+      controls[time_interval-1].etXtalMean[xtal-1]+=et;
+      controls[time_interval-1].etXtalMeanRMS[xtal-1]+=nHits*pow(RMSet,2);
+      controls[time_interval-1].etXtalMeanNoCorr[xtal-1]+=etNoCorr;
+      controls[time_interval-1].etXtalMeanNoCorrRMS[xtal-1]+=nHits*pow(RMSetNoCorr,2);
+      controls[time_interval-1].lcXtalMean[xtal-1]+=lc;
+      controls[time_interval-1].lcXtalMeanRMS[xtal-1]+=nHits*pow(RMSlc,2);
+      controls[time_interval-1].tlXtalMean[xtal-1]+=TMath::Exp(-1*TMath::Log(lc)/alphaDB(sign,ieta,iphi));
+      controls[time_interval-1].tlXtalMeanRMS[xtal-1]+=nHits*pow(RMSlc*alphaDB(sign,ieta,iphi),2);
+      controls[time_interval-1].counterXtal[xtal-1]++;
    }
 
    int counterTotal=0;
@@ -113,11 +135,13 @@ void makeControlPlots::Loop()
 	 {
 	   for(int j=0;j<kSides;++j){
 	     controls[iinterval].etMean[i][j]=controls[iinterval].etMean[i][j]/controls[iinterval].counterEta[i][j];
-	     controls[iinterval].etMeanRMS[i][j]=sqrt(controls[iinterval].etMeanRMS[i][j])/(controls[iinterval].nhitMean[i][j]);
+	     controls[iinterval].etMeanRMS[i][j]=sqrt(controls[iinterval].etMeanRMS[i][j])/(controls[iinterval].nhitMean[i][j]);// i want eerror on mean
 	     controls[iinterval].etMeanNoCorr[i][j]= controls[iinterval].etMeanNoCorr[i][j]/controls[iinterval].counterEta[i][j];
-	     controls[iinterval].etMeanNoCorrRMS[i][j]= sqrt(controls[iinterval].etMeanNoCorrRMS[i][j])/(controls[iinterval].nhitMean[i][j]);
-	     controls[iinterval].lcMeanRMS[i][j]= sqrt(controls[iinterval].lcMeanRMS[i][j])/(controls[iinterval].nhitMean[i][j]);
+	     controls[iinterval].etMeanNoCorrRMS[i][j]= sqrt(controls[iinterval].etMeanNoCorrRMS[i][j])/(controls[iinterval].nhitMean[i][j]);// i want eerror on mean
+	     controls[iinterval].lcMeanRMS[i][j]= sqrt(controls[iinterval].lcMeanRMS[i][j])/(controls[iinterval].nhitMean[i][j]);// i want eerror on mean
 	     controls[iinterval].lcMean[i][j]=controls[iinterval].lcMean[i][j]/controls[iinterval].counterEta[i][j];
+	     controls[iinterval].tlMeanRMS[i][j]= sqrt(controls[iinterval].tlMeanRMS[i][j])/(controls[iinterval].nhitMean[i][j]);// i want eerror on mean
+	     controls[iinterval].tlMean[i][j]=controls[iinterval].tlMean[i][j]/controls[iinterval].counterEta[i][j];
 	     controls[iinterval].nhitMean[i][j]=controls[iinterval].nhitMean[i][j]/controls[iinterval].counterEta[i][j];
 	   }
 	 }
@@ -130,7 +154,21 @@ void makeControlPlots::Loop()
 	   controls[iinterval].etTowerMeanNoCorrRMS[i]= sqrt(controls[iinterval].etTowerMeanNoCorrRMS[i])/(controls[iinterval].nhitTowerMean[i]);// i want eerror on mean
 	   controls[iinterval].lcTowerMean[i]=controls[iinterval].lcTowerMean[i]/controls[iinterval].counterTower[i];
 	   controls[iinterval].lcTowerMeanRMS[i]= sqrt(controls[iinterval].lcTowerMeanRMS[i])/(controls[iinterval].nhitTowerMean[i]);// i want eerror on mean
+	   controls[iinterval].tlTowerMean[i]=controls[iinterval].tlTowerMean[i]/controls[iinterval].counterTower[i];
+	   controls[iinterval].tlTowerMeanRMS[i]= sqrt(controls[iinterval].tlTowerMeanRMS[i])/(controls[iinterval].nhitTowerMean[i]);// i want eerror on mean
 	   controls[iinterval].nhitTowerMean[i]=controls[iinterval].nhitTowerMean[i]/controls[iinterval].counterTower[i];
+	 }
+       for (int i=0;i<kSM*kXtalPerSM;++i)
+	 {
+	   controls[iinterval].etXtalMean[i]=controls[iinterval].etXtalMean[i]/controls[iinterval].counterXtal[i];
+	   controls[iinterval].etXtalMeanRMS[i]=sqrt(controls[iinterval].etXtalMeanRMS[i])/(controls[iinterval].nhitXtalMean[i]);// i want eerror on mean
+	   controls[iinterval].etXtalMeanNoCorr[i]= controls[iinterval].etXtalMeanNoCorr[i]/controls[iinterval].counterXtal[i];
+	   controls[iinterval].etXtalMeanNoCorrRMS[i]= sqrt(controls[iinterval].etXtalMeanNoCorrRMS[i])/(controls[iinterval].nhitXtalMean[i]);// i want eerror on mean
+	   controls[iinterval].lcXtalMean[i]=controls[iinterval].lcXtalMean[i]/controls[iinterval].counterXtal[i];
+	   controls[iinterval].lcXtalMeanRMS[i]= sqrt(controls[iinterval].lcXtalMeanRMS[i])/(controls[iinterval].nhitXtalMean[i]);// i want eerror on mean
+	   controls[iinterval].tlXtalMean[i]=controls[iinterval].tlXtalMean[i]/controls[iinterval].counterXtal[i];
+	   controls[iinterval].tlXtalMeanRMS[i]= sqrt(controls[iinterval].tlXtalMeanRMS[i])/(controls[iinterval].nhitXtalMean[i]);// i want eerror on mean
+	   controls[iinterval].nhitXtalMean[i]=controls[iinterval].nhitXtalMean[i]/controls[iinterval].counterXtal[i];
 	 }
        nInterval[iinterval]=intervals->intervalTime(iinterval);
        nIntervalError[iinterval]=0.;
@@ -146,7 +184,14 @@ void makeControlPlots::Loop()
    float etMeanNoCorrRMSArray[kIntervals];
    float lcMeanArray[kIntervals];
    float lcMeanRMSArray[kIntervals];
+   float tlMeanArray[kIntervals];
+   float tlMeanRMSArray[kIntervals];
    float nhitMeanArray[kIntervals];
+
+   //   for(int ii=0;ii<kIntervals;++ii){
+     //     lcMeanArray[ii]=0;
+     //      lcMeanRMSArray[ii]=0;
+   // }
    
    float etTowerMeanArray[kIntervals];
    float etTowerMeanRMSArray[kIntervals];
@@ -154,11 +199,23 @@ void makeControlPlots::Loop()
    float etTowerMeanNoCorrRMSArray[kIntervals];
    float lcTowerMeanArray[kIntervals];
    float lcTowerMeanRMSArray[kIntervals];
+   float tlTowerMeanArray[kIntervals];
+   float tlTowerMeanRMSArray[kIntervals];
    float nhitTowerMeanArray[kIntervals];
+
+   float etXtalMeanArray[kIntervals];
+   float etXtalMeanRMSArray[kIntervals];
+   float etXtalMeanNoCorrArray[kIntervals];
+   float etXtalMeanNoCorrRMSArray[kIntervals];
+   float lcXtalMeanArray[kIntervals];
+   float lcXtalMeanRMSArray[kIntervals];
+   float tlXtalMeanArray[kIntervals];
+   float tlXtalMeanRMSArray[kIntervals];
+   float nhitXtalMeanArray[kIntervals];
 
 
    int historyNormalizationInterval=20;
-
+   //   kIntervals=928;
 
    TFile *outFile=TFile::Open(outFileName+"_etaRing.root","recreate");
 
@@ -169,6 +226,7 @@ void makeControlPlots::Loop()
 	 float etref=0;
 	 float etNoCorrref=0;
 	 float lcref=0;
+	 float tlref=0;
 	 float nhitref=0;
 	 int nref=0;
 	 
@@ -178,27 +236,40 @@ void makeControlPlots::Loop()
 	     etref+=controls[historyNormalizationInterval+iref].etMean[i][j];
 	     etNoCorrref+=controls[historyNormalizationInterval+iref].etMeanNoCorr[i][j];
 	     lcref+=controls[historyNormalizationInterval+iref].lcMean[i][j];
+	     tlref+=controls[historyNormalizationInterval+iref].tlMean[i][j];
 	     nhitref+=controls[historyNormalizationInterval+iref].nhitMean[i][j];
 	   }
 	 
 	 etref=etref/nref;
 	 etNoCorrref=etNoCorrref/nref;
 	 lcref=lcref/nref;
+	 tlref=tlref/nref;
 	 nhitref=nhitref/nref;
 
 
 	 
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
-	   //	   cout<<controls[iinterval].etMeanNoCorr[i][j]<<" "<<controls[iinterval].etMeanNoCorrRMS[i][j]<<" "<<controls[iinterval].lcMean[i][j]<<" "<<controls[iinterval].lcMeanRMS[i][j]<<endl;
+	   //if (i ==0 ) cout<<controls[iinterval].etMeanNoCorr[i][j]<<" "<<controls[iinterval].etMeanNoCorrRMS[i][j]<<" "<<controls[iinterval].lcMean[i][j]<<" "<<controls[iinterval].lcMeanRMS[i][j]<<endl;
 	   //Normalizing to time reference interval
 	   float nXtalRing=controls[iinterval].counterEta[i][j];
-	   etMeanArray[iinterval]=controls[iinterval].etMean[i][j]/etref;
-	   etMeanRMSArray[iinterval]=controls[iinterval].etMeanRMS[i][j]/etref;
-	   etMeanNoCorrArray[iinterval]=controls[iinterval].etMeanNoCorr[i][j]/etNoCorrref;
-	   etMeanNoCorrRMSArray[iinterval]=controls[iinterval].etMeanNoCorrRMS[i][j]/(etNoCorrref);
+	   float kFactor=1.;
+	   if (kfactorCorr)
+	     kFactor=1/(1+(controls[iinterval].etMean[i][j]/etref-1.)*kfactor_alpha);
+	   etMeanArray[iinterval]=controls[iinterval].etMean[i][j]/etref*kFactor;
+	   etMeanRMSArray[iinterval]=controls[iinterval].etMeanRMS[i][j]/etref*kFactor;
+	   etMeanNoCorrArray[iinterval]=controls[iinterval].etMeanNoCorr[i][j]/etNoCorrref*kFactor;
+	   etMeanNoCorrRMSArray[iinterval]=controls[iinterval].etMeanNoCorrRMS[i][j]/(etNoCorrref)*kFactor;
 	   nhitMeanArray[iinterval]=controls[iinterval].nhitMean[i][j]/nhitref;
-	   lcMeanArray[iinterval]=1/(controls[iinterval].lcMean[i][j]/lcref);
-	   lcMeanRMSArray[iinterval]=pow(lcref/controls[iinterval].lcMean[i][j],2)*controls[iinterval].lcMeanRMS[i][j];
+	   if(controls[iinterval].lcMean[i][j]>0){
+	     lcMeanArray[iinterval]=1/(controls[iinterval].lcMean[i][j]/lcref);
+	     lcMeanRMSArray[iinterval]=pow(lcref/controls[iinterval].lcMean[i][j],2)*controls[iinterval].lcMeanRMS[i][j];
+	     //	   if (i ==0 && j== 0) cout<<etMeanNoCorrArray[iinterval]<<" "<<etMeanNoCorrRMSArray[iinterval]<<" "<<lcMeanArray[iinterval]<<" "<<lcMeanRMSArray[iinterval]<<endl;
+
+	   }
+	     tlMeanArray[iinterval]=controls[iinterval].tlMean[i][j]/tlref;
+	   tlMeanRMSArray[iinterval]=controls[iinterval].tlMeanRMS[i][j]/(tlref);
+
+
 	   //Now normalizing other regions to reference region
 	   // 	   if (i!=0)
 	   // 	     {
@@ -208,7 +279,7 @@ void makeControlPlots::Loop()
 	   // 	       lcMeanArray[i][j][iinterval]=lcMeanArray[i][j][iinterval]/lcMeanArray[0][iinterval];
 	   // 	     }
 	 }
-	 
+
 	 TGraph* nhitGraph=new TGraph(kIntervals,nInterval,&nhitMeanArray[0]);
 	 TString etaLabel="ieta_";
 	 TString sideLabel="_side_";
@@ -220,7 +291,8 @@ void makeControlPlots::Loop()
 	 nhitGraph->GetYaxis()->SetTitle("nhit");
 	 nhitGraph->GetXaxis()->SetTitle("interval");
 	 nhitGraph->Write();
-       
+	 delete nhitGraph;
+
 	 TGraphErrors* etGraph=new TGraphErrors(kIntervals,nInterval,&etMeanArray[0],nIntervalError,&etMeanRMSArray[0]);
 	 etGraph->SetName("et_"+etaLabel+sideLabel);
 	 etGraph->SetTitle("et_"+etaLabel+sideLabel);
@@ -228,7 +300,7 @@ void makeControlPlots::Loop()
 	 etGraph->GetXaxis()->SetTitle("interval");
        
 	 etGraph->Write();
-       
+	 delete etGraph;
        
 	 TGraphErrors* etNoCorrGraph=new TGraphErrors(kIntervals,nInterval,&etMeanNoCorrArray[0],nIntervalError,&etMeanNoCorrRMSArray[0]);
 	 etNoCorrGraph->SetName("etNoCorr_"+etaLabel+sideLabel);
@@ -237,7 +309,7 @@ void makeControlPlots::Loop()
 	 etNoCorrGraph->GetXaxis()->SetTitle("interval");
        
 	 etNoCorrGraph->Write();
-       
+	 delete etNoCorrGraph;
        
 	 TGraphErrors* lcGraph=new TGraphErrors(kIntervals,nInterval,&lcMeanArray[0],nIntervalError,&lcMeanRMSArray[0]);
 	 lcGraph->SetName("lc_"+etaLabel+sideLabel);
@@ -246,14 +318,16 @@ void makeControlPlots::Loop()
 	 lcGraph->GetXaxis()->SetTitle("interval");
        
 	 lcGraph->Write();
+	 delete lcGraph;
 
-	 TGraphErrors* EtNoCorrvsLCGraph=new TGraphErrors((kIntervals-200),&lcMeanArray[200],&etMeanNoCorrArray[200],&lcMeanRMSArray[200],&etMeanNoCorrRMSArray[200]);
-	 EtNoCorrvsLCGraph->SetName("EtNoCorrvsLC_"+etaLabel+sideLabel);       
-	 EtNoCorrvsLCGraph->SetName("EtNoCorrvsLC_"+etaLabel+sideLabel);       
-	 EtNoCorrvsLCGraph->GetYaxis()->SetTitle("<etNoCorr>");   
-	 EtNoCorrvsLCGraph->GetXaxis()->SetTitle("<lc>");
+	 TGraphErrors* EtNoCorrvsTLGraph=new TGraphErrors((kIntervals-200),&tlMeanArray[200],&etMeanNoCorrArray[200],&tlMeanRMSArray[200],&etMeanNoCorrRMSArray[200]);
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel+sideLabel);       
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel+sideLabel);       
+	 EtNoCorrvsTLGraph->GetYaxis()->SetTitle("<etNoCorr>");   
+	 EtNoCorrvsTLGraph->GetXaxis()->SetTitle("<lc>");
 
-	 EtNoCorrvsLCGraph->Write();
+	 EtNoCorrvsTLGraph->Write();
+	 delete EtNoCorrvsTLGraph;
        }
      }
 
@@ -266,6 +340,7 @@ void makeControlPlots::Loop()
        float etref=0;
        float etNoCorrref=0;
        float lcref=0;
+       float tlref=0;
        float nhitref=0;
        int nref=0;
 
@@ -275,23 +350,31 @@ void makeControlPlots::Loop()
 	   etref+=controls[historyNormalizationInterval+iref].etTowerMean[i];
 	   etNoCorrref+=controls[historyNormalizationInterval+iref].etTowerMeanNoCorr[i];
 	   lcref+=controls[historyNormalizationInterval+iref].lcTowerMean[i];
+	   tlref+=controls[historyNormalizationInterval+iref].tlTowerMean[i];
 	   nhitref+=controls[historyNormalizationInterval+iref].nhitTowerMean[i];
 	 }
 
        etref=etref/nref;
        etNoCorrref=etNoCorrref/nref;
        lcref=lcref/nref;
+       tlref=tlref/nref;
        nhitref=nhitref/nref;
 
        for(int iinterval=0;iinterval<kIntervals;iinterval++){
 	 //Normalizing to time reference interval
-	 etTowerMeanArray[iinterval]=controls[iinterval].etTowerMean[i]/etref;
-	 etTowerMeanRMSArray[iinterval]=controls[iinterval].etTowerMeanRMS[i]/etref;
-	 etTowerMeanNoCorrArray[iinterval]=controls[iinterval].etTowerMeanNoCorr[i]/etNoCorrref;
-	 etTowerMeanNoCorrRMSArray[iinterval]=controls[iinterval].etTowerMeanNoCorrRMS[i]/etNoCorrref;
+	 float kFactor=1.;
+	 if (kfactorCorr)
+	   kFactor=1/(1+(controls[iinterval].etTowerMean[i]/etref-1.)*kfactor_alpha);
+	 etTowerMeanArray[iinterval]=controls[iinterval].etTowerMean[i]/etref*kFactor;
+	 etTowerMeanRMSArray[iinterval]=controls[iinterval].etTowerMeanRMS[i]/etref*kFactor;
+	 etTowerMeanNoCorrArray[iinterval]=controls[iinterval].etTowerMeanNoCorr[i]/etNoCorrref*kFactor;
+	 etTowerMeanNoCorrRMSArray[iinterval]=controls[iinterval].etTowerMeanNoCorrRMS[i]/etNoCorrref*kFactor;
 	 nhitTowerMeanArray[iinterval]=controls[iinterval].nhitTowerMean[i]/nhitref;
 	 lcTowerMeanArray[iinterval]=1/(controls[iinterval].lcTowerMean[i]/lcref);
 	 lcTowerMeanRMSArray[iinterval]=pow(lcref/controls[iinterval].lcTowerMean[i],2)*controls[iinterval].lcTowerMeanRMS[i];
+	 tlTowerMeanArray[iinterval]=controls[iinterval].tlTowerMean[i]/tlref;
+	 tlTowerMeanRMSArray[iinterval]=controls[iinterval].tlTowerMeanRMS[i]/(tlref);
+
 	 //Now normalizing other regions to reference region
 	 // 	   if (i!=0)
 	 // 	     {
@@ -305,29 +388,30 @@ void makeControlPlots::Loop()
        TString etaLabel="itt_";
        etaLabel+=(i+1);
        
-	 nhitGraph->SetName("nHit_"+etaLabel);
-	 nhitGraph->SetTitle("nHit_"+etaLabel);
-	 nhitGraph->GetYaxis()->SetTitle("nhit");
-	 nhitGraph->GetXaxis()->SetTitle("interval");
-	 nhitGraph->Write();
-	 
-	 TGraphErrors* etGraph=new TGraphErrors(kIntervals,nInterval,&etTowerMeanArray[0],nIntervalError,&etTowerMeanRMSArray[0]);
-	 etGraph->SetName("et_"+etaLabel);
-	 etGraph->SetTitle("et_"+etaLabel);
-	 etGraph->GetYaxis()->SetTitle("<et>/<et ieta=1>");   
-	 etGraph->GetXaxis()->SetTitle("interval");
-	 
-	 etGraph->Write();
-	 
-	 
-	 TGraphErrors* etNoCorrGraph=new TGraphErrors(kIntervals,nInterval,&etTowerMeanNoCorrArray[0],nIntervalError,&etTowerMeanNoCorrRMSArray[0]);
-	 etNoCorrGraph->SetName("etNoCorr_"+etaLabel);
+       nhitGraph->SetName("nHit_"+etaLabel);
+       nhitGraph->SetTitle("nHit_"+etaLabel);
+       nhitGraph->GetYaxis()->SetTitle("nhit");
+       nhitGraph->GetXaxis()->SetTitle("interval");
+       nhitGraph->Write();
+       delete nhitGraph;
+
+       TGraphErrors* etGraph=new TGraphErrors(kIntervals,nInterval,&etTowerMeanArray[0],nIntervalError,&etTowerMeanRMSArray[0]);
+       etGraph->SetName("et_"+etaLabel);
+       etGraph->SetTitle("et_"+etaLabel);
+       etGraph->GetYaxis()->SetTitle("<et>/<et ieta=1>");   
+       etGraph->GetXaxis()->SetTitle("interval");
+       
+       etGraph->Write();
+       delete etGraph;
+       
+       TGraphErrors* etNoCorrGraph=new TGraphErrors(kIntervals,nInterval,&etTowerMeanNoCorrArray[0],nIntervalError,&etTowerMeanNoCorrRMSArray[0]);
+       etNoCorrGraph->SetName("etNoCorr_"+etaLabel);
 	 etNoCorrGraph->SetTitle("etNoCorr_"+etaLabel);
 	 etNoCorrGraph->GetYaxis()->SetTitle("<etNoCorr>");   
 	 etNoCorrGraph->GetXaxis()->SetTitle("interval");
 	 
 	 etNoCorrGraph->Write();
-	 
+	 delete etNoCorrGraph;
 	 
 	 TGraphErrors* lcGraph=new TGraphErrors(kIntervals,nInterval,&lcTowerMeanArray[0],nIntervalError,&lcTowerMeanRMSArray[0]);
 	 lcGraph->SetName("lc_"+etaLabel);
@@ -336,15 +420,120 @@ void makeControlPlots::Loop()
 	 lcGraph->GetXaxis()->SetTitle("interval");
 	 
 	 lcGraph->Write();
+	 delete lcGraph;
+
+	 TGraphErrors* EtNoCorrvsTLGraph=new TGraphErrors((kIntervals-200),&tlTowerMeanArray[200],&etTowerMeanNoCorrArray[200],&tlTowerMeanRMSArray[200],&etTowerMeanNoCorrRMSArray[200]);
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel);       
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel);       
+	 EtNoCorrvsTLGraph->GetYaxis()->SetTitle("<etNoCorr>");   
+	 EtNoCorrvsTLGraph->GetXaxis()->SetTitle("<lc>");
+
+	 EtNoCorrvsTLGraph->Write();       
+	 delete EtNoCorrvsTLGraph;
+       
+     }
+
+   outFile->Write();
+   outFile->Close();
+
+   outFile=TFile::Open(outFileName+"_ixtal.root","recreate");
+   for (int i=0;i<kSM*kXtalPerSM;++i)
+     {
+       std::cout << "Creating history for ixtal " <<  i+1 << "/" << kSM*kXtalPerSM << std::endl;
+       float etref=0;
+       float etNoCorrref=0;
+       float lcref=0;
+       float tlref=0;
+       float nhitref=0;
+       int nref=0;
+
+       for (int iref=-5;iref<6;++iref)
+	 {
+	   nref++;
+	   etref+=controls[historyNormalizationInterval+iref].etXtalMean[i];
+	   etNoCorrref+=controls[historyNormalizationInterval+iref].etXtalMeanNoCorr[i];
+	   lcref+=controls[historyNormalizationInterval+iref].lcXtalMean[i];
+	   tlref+=controls[historyNormalizationInterval+iref].tlXtalMean[i];
+	   nhitref+=controls[historyNormalizationInterval+iref].nhitXtalMean[i];
+	 }
+
+       etref=etref/nref;
+       etNoCorrref=etNoCorrref/nref;
+       lcref=lcref/nref;
+       tlref=tlref/nref;
+       nhitref=nhitref/nref;
+
+       for(int iinterval=0;iinterval<kIntervals;iinterval++){
+	 //Normalizing to time reference interval
+	 float kFactor=1.;
+	 if (kfactorCorr)
+	   kFactor=1/(1+(controls[iinterval].etXtalMean[i]/etref-1.)*kfactor_alpha);
+	 etXtalMeanArray[iinterval]=controls[iinterval].etXtalMean[i]/etref*kFactor;
+	 etXtalMeanRMSArray[iinterval]=controls[iinterval].etXtalMeanRMS[i]/etref*kFactor;
+	 etXtalMeanNoCorrArray[iinterval]=controls[iinterval].etXtalMeanNoCorr[i]/etNoCorrref*kFactor;
+	 etXtalMeanNoCorrRMSArray[iinterval]=controls[iinterval].etXtalMeanNoCorrRMS[i]/etNoCorrref*kFactor;
+	 nhitXtalMeanArray[iinterval]=controls[iinterval].nhitXtalMean[i]/nhitref;
+	 lcXtalMeanArray[iinterval]=1/(controls[iinterval].lcXtalMean[i]/lcref);
+	 lcXtalMeanRMSArray[iinterval]=pow(lcref/controls[iinterval].lcXtalMean[i],2)*controls[iinterval].lcXtalMeanRMS[i];
+	 tlXtalMeanArray[iinterval]=controls[iinterval].tlXtalMean[i]/tlref;
+	 tlXtalMeanRMSArray[iinterval]=controls[iinterval].tlXtalMeanRMS[i]/(tlref);
+
+	 //Now normalizing other regions to reference region
+	 // 	   if (i!=0)
+	 // 	     {
+	 // 	       etMeanArray[iinterval]=etMeanArray[iinterval]/etMeanArray[0][iinterval];
+	 // 	       etMeanNoCorrArray[iinterval]=etMeanNoCorrArray[iinterval]/etMeanNoCorrArray[0][iinterval];
+	 // 	       nhitMeanArray[iinterval]=nhitMeanArray[iinterval]/nhitMeanArray[0][iinterval];
+	 // 	       lcMeanArray[iinterval]=lcMeanArray[iinterval]/lcMeanArray[0][iinterval];
+	 // 	     }
+       }
+       TGraph* nhitGraph=new TGraph(kIntervals,nInterval,&nhitXtalMeanArray[0]);
+       TString etaLabel="ixtal_";
+       etaLabel+=(i+1);
+       
+       nhitGraph->SetName("nHit_"+etaLabel);
+       nhitGraph->SetTitle("nHit_"+etaLabel);
+       nhitGraph->GetYaxis()->SetTitle("nhit");
+       nhitGraph->GetXaxis()->SetTitle("interval");
+       nhitGraph->Write();
+       delete nhitGraph;
+
+       TGraphErrors* etGraph=new TGraphErrors(kIntervals,nInterval,&etXtalMeanArray[0],nIntervalError,&etXtalMeanRMSArray[0]);
+       etGraph->SetName("et_"+etaLabel);
+       etGraph->SetTitle("et_"+etaLabel);
+       etGraph->GetYaxis()->SetTitle("<et>/<et ieta=1>");   
+       etGraph->GetXaxis()->SetTitle("interval");
+       
+       etGraph->Write();
+       delete etGraph;
+       
+       TGraphErrors* etNoCorrGraph=new TGraphErrors(kIntervals,nInterval,&etXtalMeanNoCorrArray[0],nIntervalError,&etXtalMeanNoCorrRMSArray[0]);
+       etNoCorrGraph->SetName("etNoCorr_"+etaLabel);
+       etNoCorrGraph->SetTitle("etNoCorr_"+etaLabel);
+       etNoCorrGraph->GetYaxis()->SetTitle("<etNoCorr>");   
+       etNoCorrGraph->GetXaxis()->SetTitle("interval");
+       
+       etNoCorrGraph->Write();
+       delete etNoCorrGraph;
 	 
+	 
+	 TGraphErrors* lcGraph=new TGraphErrors(kIntervals,nInterval,&lcXtalMeanArray[0],nIntervalError,&lcXtalMeanRMSArray[0]);
+	 lcGraph->SetName("lc_"+etaLabel);
+	 lcGraph->SetTitle("lc_"+etaLabel);
+	 lcGraph->GetYaxis()->SetTitle("<tl>");   
+	 lcGraph->GetXaxis()->SetTitle("interval");
+	 
+	 lcGraph->Write();
+	 delete lcGraph;
 
-	 TGraphErrors* EtNoCorrvsLCGraph=new TGraphErrors((kIntervals-200),&lcTowerMeanArray[200],&etTowerMeanNoCorrArray[200],&lcTowerMeanRMSArray[200],&etTowerMeanNoCorrRMSArray[200]);
-	 EtNoCorrvsLCGraph->SetName("EtNoCorrvsLC_"+etaLabel);       
-	 EtNoCorrvsLCGraph->SetName("EtNoCorrvsLC_"+etaLabel);       
-	 EtNoCorrvsLCGraph->GetYaxis()->SetTitle("<etNoCorr>");   
-	 EtNoCorrvsLCGraph->GetXaxis()->SetTitle("<lc>");
+	 TGraphErrors* EtNoCorrvsTLGraph=new TGraphErrors((kIntervals-200),&tlXtalMeanArray[200],&etXtalMeanNoCorrArray[200],&tlXtalMeanRMSArray[200],&etXtalMeanNoCorrRMSArray[200]);
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel);       
+	 EtNoCorrvsTLGraph->SetName("EtNoCorrvsTL_"+etaLabel);       
+	 EtNoCorrvsTLGraph->GetYaxis()->SetTitle("<etNoCorr>");   
+	 EtNoCorrvsTLGraph->GetXaxis()->SetTitle("<lc>");
 
-	 EtNoCorrvsLCGraph->Write();       
+	 EtNoCorrvsTLGraph->Write();       
+	 delete EtNoCorrvsTLGraph;
        
      }
 

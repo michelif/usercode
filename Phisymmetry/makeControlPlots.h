@@ -50,6 +50,7 @@
 #define kBarlWedges 360
 #define kSides 2
 #define kTowerPerSM 68
+#define kXtalPerSM 1700
 #define kSM 36
 
 
@@ -61,7 +62,9 @@ public :
    lumiIntervals* intervals;
 
    TString outFileName;
-   
+   bool kfactorCorr;
+   float kfactor_alpha;
+   float errEtCorr_factor;
 
    // Declaration of leaf types
    Int_t           time_interval;
@@ -89,6 +92,45 @@ public :
    TBranch        *b_lc;   //!
    TBranch        *b_RMSlc;   //!
 
+   // is the xtal Chinese?
+   bool isChinese(int eta, int phi)
+   {
+     if( (eta>-76 ) && (eta<76) ) 
+       return false;
+     
+     if(eta>75){
+       if(phi>300 && phi<=340) return true;
+       if(phi>120 && phi<=140) return true;
+       if(phi>231 && phi<=240) return true;
+       if(eta>=81){
+	 if(phi>220 && phi<=240) return true;
+	 if(phi>180 && phi<=200) return true;
+       }
+     }
+     
+     if(eta<-76)
+       {
+	 if(phi>200 && phi<=220) return true;
+	 if(phi>240 && phi<=300) return true;
+	 if(eta<= -81){
+	   if(phi>20 && phi<=40) return true;
+	   if(phi>60 && phi<=100) return true;
+	 }
+       }
+     return false;
+   }
+   
+   // return alpha as from the simple russian/chinese DB
+   float alphaDB(int iSign, int eta, int phi)
+   {
+     int xxsign = (iSign == 1) ? 1 : -1;
+     if (isChinese(xxsign*eta,phi))
+       return 1.0;
+     else
+       return 1.52;
+   }
+   
+   // return an index between 1 and 36
    int iSM(int eta, int phi, int isign)
    {
      int id = ( phi - 1 ) / 20 + 1;
@@ -96,6 +138,7 @@ public :
      return id;
    }
 
+   // return an index between 1 and 68
    int iTower(int eta, int phi, int isign)
    {
      int ttEta=(eta-1)/5+1;
@@ -103,22 +146,54 @@ public :
      return (ttEta-1)*4+ttPhi;
    }
 
+   // return an index between 1 and 2448
    int iTT(int eta, int phi, int isign)
    {
      return (iSM(eta,phi,isign)-1)*68+iTower(eta,phi,isign);
    }
 
-   struct variablesToControl{
+   // return an index between 1 and 61200
+   int iXtal(int eta, int phi, int isign)
+   {
+     int etaIndex=eta-1;
+     if (isign==1)
+       etaIndex+=85;
+     return (etaIndex*kBarlWedges+phi);
+   }
+
+
+   struct variablesToControl
+   {
      float etMean[kBarlRings][kSides];
+     float etMeanRMS[kBarlRings][kSides];
      float etMeanNoCorr[kBarlRings][kSides];     
+     float etMeanNoCorrRMS[kBarlRings][kSides];     
      float lcMean[kBarlRings][kSides];
+     float lcMeanRMS[kBarlRings][kSides];
+     float tlMean[kBarlRings][kSides];
+     float tlMeanRMS[kBarlRings][kSides];
      float nhitMean[kBarlRings][kSides];
      int   counterEta[kBarlRings][kSides];  
      float etTowerMean[kSM*kTowerPerSM];
+     float etTowerMeanRMS[kSM*kTowerPerSM];
      float etTowerMeanNoCorr[kSM*kTowerPerSM];     
+     float etTowerMeanNoCorrRMS[kSM*kTowerPerSM];     
      float lcTowerMean[kSM*kTowerPerSM];
+     float lcTowerMeanRMS[kSM*kTowerPerSM];
+     float tlTowerMean[kSM*kTowerPerSM];
+     float tlTowerMeanRMS[kSM*kTowerPerSM];
      float nhitTowerMean[kSM*kTowerPerSM];
      int   counterTower[kSM*kTowerPerSM];  
+     float etXtalMean[kSM*kXtalPerSM];
+     float etXtalMeanRMS[kSM*kXtalPerSM];
+     float etXtalMeanNoCorr[kSM*kXtalPerSM];     
+     float etXtalMeanNoCorrRMS[kSM*kXtalPerSM];     
+     float lcXtalMean[kSM*kXtalPerSM];
+     float lcXtalMeanRMS[kSM*kXtalPerSM];
+     float tlXtalMean[kSM*kXtalPerSM];
+     float tlXtalMeanRMS[kSM*kXtalPerSM];
+     float nhitXtalMean[kSM*kXtalPerSM];
+     int   counterXtal[kSM*kXtalPerSM];  
      float   counter;
 
 
@@ -127,8 +202,11 @@ public :
 	 {
 	   for(int j=0;j<kSides;j++){
 	     etMean[i][j]=0;	
+	     etMeanRMS[i][j]=0;	
 	     etMeanNoCorr[i][j]=0;
+	     etMeanNoCorrRMS[i][j]=0;     
 	     lcMean[i][j]=0;	
+	     lcMeanRMS[i][j]=0;	
 	     nhitMean[i][j]=0;	
 	     counterEta[i][j]=0;     
 	   }
@@ -136,10 +214,24 @@ public :
        for (int i=0;i<kSM*kTowerPerSM;++i)
 	 {
 	   etTowerMean[i]=0;	
+	   etTowerMeanRMS[i]=0;	
 	   etTowerMeanNoCorr[i]=0;
+	   etTowerMeanNoCorrRMS[i]=0;
 	   lcTowerMean[i]=0;	
+	   lcTowerMeanRMS[i]=0;	
 	   nhitTowerMean[i]=0;	
 	   counterTower[i]=0;     
+	 }
+       for (int i=0;i<kSM*kXtalPerSM;++i)
+	 {
+	   etXtalMean[i]=0;	
+	   etXtalMeanRMS[i]=0;	
+	   etXtalMeanNoCorr[i]=0;
+	   etXtalMeanNoCorrRMS[i]=0;
+	   lcXtalMean[i]=0;	
+	   lcXtalMeanRMS[i]=0;	
+	   nhitXtalMean[i]=0;	
+	   counterXtal[i]=0;     
 	 }
        counter=0;	
      }
