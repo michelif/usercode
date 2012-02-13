@@ -15,13 +15,15 @@
 #include <iostream>
 
 #define NXTALS 61200
-#define NHITSMAX 1500
+#define NHITSMAX 1500*4
 #define NTRIGGERMAX NXTALS*NHITSMAX
-#define MAXSTOPHOURS 12 
-#define MAXSTOPTIME 3600*12
+#define MAXSTOPHOURS 24 
+#define MAXSTOPTIME 3600*MAXSTOPHOURS
 
 class readMap {
 public :
+
+  
   struct interval_t
   {
     int runStart;

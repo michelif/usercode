@@ -71,12 +71,12 @@ void readMap::Loop()
    int shortIntervals=0;
    int isolatedIntervals=0;
 
+
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
       Long64_t ientry = LoadTree(jentry);
       if (ientry < 0) break;
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
-
       //Checking quality of LS
       if (goodLS && !goodLS->isGoodLS(run,ls))
 	continue;
@@ -85,6 +85,7 @@ void readMap::Loop()
       if(currentInterval.nHit==0)
 	{
 	  //Just define a new interval start
+
 	  currentInterval.unixTimeMean=(unsigned long long)unixtime*(unsigned long long)nhit;
 	  currentInterval.unixTimeStart=unixtime;
 	  currentInterval.nLS=1;
@@ -122,8 +123,9 @@ void readMap::Loop()
 	    }
 	  else
 	    {
+	      if(fullIntervals != 0){
 	      interval_t& lastInterval=intervals.back();
-	      if ( (currentInterval.unixTimeEnd - lastInterval.unixTimeStart )<MAXSTOPTIME)
+	      if ( (currentInterval.unixTimeEnd - lastInterval.unixTimeStart )<=MAXSTOPTIME)
 		{
 		  // Not enough statistics. Still consistent with the last interval, so merge the two intervals
 		  currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
@@ -137,6 +139,12 @@ void readMap::Loop()
 		  intervals.push_back(currentInterval);
 		  isolatedIntervals++;
 		}
+	      }else{
+		// Too short and too isolated interval. Adding as new interval, but can be dropped if needed
+		currentInterval.unixTimeMean=(long double)(currentInterval.unixTimeMean)/(long double)(currentInterval.nHit);
+		intervals.push_back(currentInterval);
+		isolatedIntervals++;
+	      }
 
 	    }
 	  //Now setting this run,ls as a new interval start
