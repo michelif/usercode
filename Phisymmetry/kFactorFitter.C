@@ -49,6 +49,7 @@ void kFactorFitter::FitKFactors (){
   std::vector<kFactorGraphs> graphs;
   graphs.reserve(kBarlRings);
 
+  int badiieta=-1,badiisign=-1,badiiphi=-1;
 
   for(int iisign=0;iisign<kSides;iisign++){
     for(int iieta=0;iieta<kBarlRings;iieta++){
@@ -89,7 +90,7 @@ void kFactorFitter::FitKFactors (){
 	  exit(0);
 	}
 	
-	while(!fileListK.eof() && sum <80 ){
+	while(!fileListK.eof() && sum < 80){
 	  string nameFile;
 	  getline(fileListK,nameFile);
 	  TFile * dummyFile;
@@ -118,6 +119,10 @@ void kFactorFitter::FitKFactors (){
 	      dummyGraph->SetName(dummy2.str().c_str());
 	      
 	      graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->Add(dummyGraph);
+	    }else{
+	      badiieta=iieta;
+	      badiiphi=iiphi;
+	      badiisign=iisign;
 	    }
 
 	    if(dummyGraphRatio){
@@ -134,10 +139,10 @@ void kFactorFitter::FitKFactors (){
 	      
 	      graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->Add(dummyGraphnHits);
 	    }
-
+	    delete dummyFile;
 	  }
 	  //   delete dummyGraph;
-	  //	  delete dummyFile;
+	 	
 	  sum++;
 	  //	    cout<<sum<<endl;
 	} 
@@ -145,15 +150,19 @@ void kFactorFitter::FitKFactors (){
  
 	kFactorGraph->cd();
 	cout<<iieta<<" "<<iiphi<<" "<<iisign<<endl;
+	int theSign=iisign>0 ? 1 : -1;
+	//	cout<<graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->Sizeof()<<endl;
+	if(iieta != badiieta || iiphi!=badiiphi || iisign != badiisign){
 
 	TCanvas* c = new TCanvas("c", "c");
 	c->cd();
 	cout<<"writing"<<endl;
+
 	graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->Draw("AP");
 	graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->Fit("pol1","Q","");
 	
 	//cout<<"write ok"<<endl;
-	int theSign=iisign>0 ? 1 : -1;
+
 	xtalkMap.Fill(iiphi+1,iieta*theSign,graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1));
 	graphs[iieta].kFactorGraphs_barl[iiphi][iisign]->Write();
 
@@ -162,27 +171,31 @@ void kFactorFitter::FitKFactors (){
 	TCanvas* c1 = new TCanvas("c1", "c1");
 	c1->cd();
 	//	cout<<"writing"<<endl;
+
 	graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->Draw("AP");
 	graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->Fit("pol1","Q","");
 	xtalkRatioMap.Fill(iiphi+1,iieta*theSign,graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1));	
-	cout<<graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1)<<endl;
+	//	cout<<graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1)<<endl;
 	//cout<<"write ok"<<endl;
 
 
 	graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign]->Write();
+
 	c1->Close();
 
 	TCanvas* c2 = new TCanvas("c2", "c2");
 	c2->cd();
 	//	cout<<"writing"<<endl;
-	graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->Draw("AP");
+
+	  graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->Draw("AP");
 	graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->Fit("pol1","Q","");
 	xtalknHitsMap.Fill(iiphi+1,iieta*theSign,graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1));		
 	//cout<<"write ok"<<endl;
 
 	graphs[iieta].kFactorGraphsnHits_barl[iiphi][iisign]->Write();
-	c2->Close();
 
+	c2->Close();
+	}
 
 	delete   graphs[iieta].kFactorGraphs_barl[iiphi][iisign];
 	delete   graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign];
