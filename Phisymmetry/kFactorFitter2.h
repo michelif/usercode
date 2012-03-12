@@ -52,14 +52,18 @@ class kFactorFitter2 {
 public :
    TTree          *fChain;   //!pointer to the analyzed TTree or TChain
    Int_t           fCurrent; //!current Tree number in a TChain
+   TString outFileName;
 
    struct kFactorGraphs{
      TGraph* kFactorGraphsSum_barl[kBarlWedges][kSides];
      TGraph* kFactorGraphsMean_barl[kBarlWedges][kSides];
      TGraph* kFactorGraphsRatio_barl[kBarlWedges][kSides];
+     TGraph* kFactorGraphsRatioMean_barl[kBarlWedges][kSides];
      TGraph* kFactorGraphsnHits_barl[kBarlWedges][kSides];
-     float etsum_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_vec[kBarlWedges][kSides][kNMiscalBinsEB];
-     float etsum_first_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_first_vec[kBarlWedges][kSides][kNMiscalBinsEB],etsum_second_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_second_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+     float etsum_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_vec[kBarlWedges][kSides][kNMiscalBinsEB],etmean_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+     float etsum_first_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_first_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+     float etsum_second_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_second_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+     float ratio_vec[kBarlWedges][kSides][kNMiscalBinsEB],ratioMean_vec[kBarlWedges][kSides][kNMiscalBinsEB];
    };
 
 
@@ -96,6 +100,7 @@ public :
    virtual void     Loop();
    virtual Bool_t   Notify();
    virtual void     Show(Long64_t entry = -1);
+   void setOutfile(const char* outFile);
 };
 
 #endif
@@ -197,4 +202,11 @@ Int_t kFactorFitter2::Cut(Long64_t entry)
 // returns -1 otherwise.
    return 1;
 }
+
+void kFactorFitter2::setOutfile(const char* file)
+{
+   outFileName=TString(file);
+}
+
+
 #endif // #ifdef kFactorFitter2_cxx
