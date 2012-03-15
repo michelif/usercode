@@ -97,6 +97,13 @@ void createHistoryPlots_barl::Loop()
 
    cout<<"start looping over entries"<<endl;
    Long64_t nbytes = 0, nb = 0;
+
+   //if you want to apply an offline et cut
+   bool doOfflineEtCut=false;
+   float offlineEtCut=0.4;
+
+   if (doOfflineEtCut==false) offlineEtCut=0;
+
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
      Long64_t ientry = LoadTree(jentry);
      if (ientry < 0) break;
@@ -114,7 +121,7 @@ void createHistoryPlots_barl::Loop()
        int thePhi=iphi[ihit];
        
        //	 cout<<theEta<<" "<<thePhi<<" "<<theInterval<<" "<<theSign<<endl;
-       if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theInterval <kIntervals && theEta <=kBarlRings ){
+       if(theSign < kSides && thePhi <=kBarlWedges && theInterval>=0 && theInterval <kIntervals && theEta <=kBarlRings && et_barl[ihit]>offlineEtCut){
 	 sums[theInterval].energySum[theEta-1][thePhi-1][theSign]+=et_barl[ihit];
 	 sums[theInterval].energySquared[theEta-1][thePhi-1][theSign]+=pow(et_barl[ihit],2);
 	 sums[theInterval].energyNoCorrSum[theEta-1][thePhi-1][theSign]+=et_barl[ihit]/lc_barl[ihit];
