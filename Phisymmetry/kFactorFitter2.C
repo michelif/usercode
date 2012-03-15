@@ -4,6 +4,43 @@
 #include <TStyle.h>
 #include <TCanvas.h>
 
+float bestCut[85];
+
+void kFactorFitter2::GetCutValues(){
+  TFile *f=TFile::Open("root://eoscms//eos/cms/store/group/alca_ecalcalib/micheli/phisym/Run2011A_1/variablesTree_49_1_ct5.root");
+  TTree* variablesTree_barl=(TTree*)f->Get("variablesTree_barl");
+  TH1F* h[85];
+  float iieta[85];
+
+  for (int i=1;i<=85;++i)
+    {
+      TString histoName="h_";
+      histoName+=i;
+      h[i-1]=new TH1F(histoName,histoName,600,0.,1.5);
+      TString drawString="et_barl>>h_";
+      drawString+=i;
+      TString cutString="ieta==";
+      cutString+=i;
+      
+      variablesTree_barl->Draw(drawString,cutString);
+      bestCut[i-1]=-1.;
+      iieta[i-1]=0.0175/2 + (i-1)*0.0175;
+      for (int ibin=40;ibin<160;++ibin)
+        {
+          if (h[i-1]->Integral(1,ibin)>0)
+            if (fabs(h[i-1]->Integral(ibin+1,h[i-1]->GetNbinsX())/h[i-1]->Integral(1,ibin)-1.)<0.05)
+              {
+                bestCut[i-1]=(float)ibin/400.;
+		//		std::cout << "ieta " << i << " bestCut " << bestCut[i-1] << std::endl;
+		std::cout <<"middle_cut["<<i-1<<"]="<<bestCut[i-1]<<";"<<endl;
+
+                break;
+              }
+
+        }
+    }
+  return;
+}
 
 void kFactorFitter2::Loop()
 {
@@ -90,6 +127,9 @@ void kFactorFitter2::Loop()
    
    float nsecondVsnfirst=0;
    float counterRatio=0;
+   float nsecondVsnfirstHighEta=0;
+   float counterRatioHighEta=0;
+
 	 
 
    for(int iieta=0;iieta<kBarlRings;++iieta){
@@ -174,6 +214,11 @@ void kFactorFitter2::Loop()
 	 if(graphs[iieta].etsum_first_vec[iiphi][iisign][middlebin]!=0 && graphs[iieta].etsum_second_vec[iiphi][iisign][middlebin]!=0){
 	   nsecondVsnfirst+=graphs[iieta].nhits_second_vec[iiphi][iisign][middlebin]/graphs[iieta].nhits_first_vec[iiphi][iisign][middlebin];  
 	   counterRatio++;
+
+	   if(iieta==79){
+	   nsecondVsnfirstHighEta+=graphs[iieta].nhits_second_vec[iiphi][iisign][middlebin]/graphs[iieta].nhits_first_vec[iiphi][iisign][middlebin];  
+	   counterRatioHighEta++;
+	   }
 	   for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){//ratio of the mean energy
 	     graphs[iieta].ratioMean_vec[iiphi][iisign][iibin]=graphs[iieta].etsum_second_vec[iiphi][iisign][iibin]*graphs[iieta].nhits_first_vec[iiphi][iisign][iibin]/(graphs[iieta].etsum_first_vec[iiphi][iisign][iibin]*graphs[iieta].nhits_second_vec[iiphi][iisign][iibin]);
 	   }
@@ -225,7 +270,9 @@ void kFactorFitter2::Loop()
      }
    }
 
-   cout<<nsecondVsnfirst/counterRatio<<"+-"<<sqrt(nsecondVsnfirst*(1+nsecondVsnfirst/counterRatio))/counterRatio<<endl;
+   cout<<"ratio "<<nsecondVsnfirst/counterRatio<<"+-"<<sqrt(nsecondVsnfirst*(1+nsecondVsnfirst/counterRatio))/counterRatio<<endl;
+   cout<<"ratio High Eta "<<nsecondVsnfirstHighEta/counterRatioHighEta<<"+-"<<sqrt(nsecondVsnfirstHighEta*(1+nsecondVsnfirstHighEta/counterRatioHighEta))/counterRatioHighEta<<endl;
+
 
    xtalkSumMap.Write();
    xtalkMeanMap.Write();
