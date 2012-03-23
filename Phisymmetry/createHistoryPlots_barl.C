@@ -99,8 +99,8 @@ void createHistoryPlots_barl::Loop()
    Long64_t nbytes = 0, nb = 0;
 
    //if you want to apply an offline et cut
-   bool doOfflineEtCut=false;
-   float offlineEtCut=0.4;
+   bool doOfflineEtCut=true;
+   float offlineEtCut=0.25;
 
    if (doOfflineEtCut==false) offlineEtCut=0;
 
