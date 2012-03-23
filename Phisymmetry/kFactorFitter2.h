@@ -41,7 +41,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
-#define  kNMiscalBinsEB 21
+#define  kNMiscalBinsEB 11
 
 #define kBarlRings 85
 #define kBarlWedges 360
@@ -60,10 +60,41 @@ public :
      TGraph* kFactorGraphsRatio_barl[kBarlWedges][kSides];
      TGraph* kFactorGraphsRatioMean_barl[kBarlWedges][kSides];
      TGraph* kFactorGraphsnHits_barl[kBarlWedges][kSides];
+     TGraph* kFactorGraphsnHitsRatio_barl[kBarlWedges][kSides];
      float etsum_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_vec[kBarlWedges][kSides][kNMiscalBinsEB],etmean_vec[kBarlWedges][kSides][kNMiscalBinsEB];
      float etsum_first_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_first_vec[kBarlWedges][kSides][kNMiscalBinsEB];
      float etsum_second_vec[kBarlWedges][kSides][kNMiscalBinsEB],nhits_second_vec[kBarlWedges][kSides][kNMiscalBinsEB];
      float ratio_vec[kBarlWedges][kSides][kNMiscalBinsEB],ratioMean_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+     float ratio_nhits_vec[kBarlWedges][kSides][kNMiscalBinsEB];
+
+     //rings
+     TGraph* kFactorGraph_ring;
+     float etmean_ring[kNMiscalBinsEB];
+     float etsum_ring[kNMiscalBinsEB];
+     float nhits_ring[kNMiscalBinsEB];
+
+     void Reset(){
+       //       cout<<"resetting quantities "<<endl;
+
+       for(int iieta=0;iieta<kBarlRings;++iieta){
+	 for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){
+	   etsum_ring[iibin]=0;
+	   etmean_ring[iibin]=0;
+	   nhits_ring[iibin]=0;
+	   for(int iiphi=0;iiphi<kBarlWedges;++iiphi){
+	     for(int iisign=0;iisign<kSides;++iisign){
+
+	       etsum_vec[iiphi][iisign][iibin]=0;
+	       nhits_vec[iiphi][iisign][iibin]=0;
+	       etmean_vec[iiphi][iisign][iibin]=0;
+	     }
+	   }
+	 }
+	 
+       }
+     }
+
+
    };
 
 

@@ -79,15 +79,26 @@ void kFactorFitter2::Loop()
    std::vector<kFactorGraphs> graphs;
    graphs.reserve(kBarlRings);
 
+   for(int i =0 ;i<kBarlRings;i++){
+
+     graphs[i].Reset();
+   }
+
   TH2F xtalkSumMap("xtalkSumMap","xtalkSumMap",360,0.5,360.5,171,-85.5,85.5);
   TH2F xtalkMeanMap("xtalkMeanMap","xtalkMeanMap",360,0.5,360.5,171,-85.5,85.5);
+  TH2F xtalChiMeanMap("xtalChiMeanMap","xtalChiMeanMap",360,0.5,360.5,171,-85.5,85.5);
   TH2F xtalknHitsMap("xtalknHitsMap","xtalknHitsMap",360,0.5,360.5,171,-85.5,85.5);
   TH2F xtalkRatioMap("xtalkRatioMap","xtalkRatioMap",360,0.5,360.5,171,-85.5,85.5);
   TH2F xtalkRatioMeanMap("xtalkRatioMeanMap","xtalkRatioMeanMap",360,0.5,360.5,171,-85.5,85.5);
+  TH2F xtalknHitsRatioMap("xtalknHitsRatioMeanMap","xtalknHitsRatioMeanMap",360,0.5,360.5,171,-85.5,85.5);
+
   TH1F mapOneEtaRing("mapOneEtaRing","mapOneEtaRing",100,1.5,2.5);
 
-  float nHitsMeanXtal=0;
+  float nHitsMeanXtalIeta1=0;
+  float nHitsMeanXtalIeta85=0;
   float counter=0;
+  int oldEta=-1,oldPhi=-1,oldSign=-1;
+
 
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
      if(jentry%1000000==0) std::cout<<jentry<<std::endl;
@@ -96,11 +107,21 @@ void kFactorFitter2::Loop()
       nb = fChain->GetEntry(jentry);   nbytes += nb;
       // if (Cut(ientry) < 0) continue;
       miscal_vec[ibin]=miscal;
-      if(etsum>0 && nhits>0){
+      if(ieta!=oldEta || iphi!= oldPhi || oldSign != sign )ibin=0;
+      if(etsum>0 && nhits>0 ){
+	graphs[ieta-1].etsum_ring[ibin]+=etsum;
+	graphs[ieta-1].nhits_ring[ibin]+=nhits;
 	graphs[ieta-1].etsum_vec[iphi-1][sign][ibin]+=etsum;
 	graphs[ieta-1].nhits_vec[iphi-1][sign][ibin]+=nhits;
-	nHitsMeanXtal+=nhits;
-	counter++;
+	if(ieta==1 && iphi==1 && sign==0 && ibin==0){
+	  nHitsMeanXtalIeta1+=nhits;
+	  //	  counter++;
+	}
+	if(ieta==85 && iphi==1 && sign==0 && ibin==0){
+	  nHitsMeanXtalIeta85+=nhits;
+	  //	  counter++;
+	}
+
       }
       if(etsum_first>0 && nhits_first>0){
 	graphs[ieta-1].etsum_first_vec[iphi-1][sign][ibin]+=etsum_first;
@@ -110,15 +131,19 @@ void kFactorFitter2::Loop()
 	graphs[ieta-1].etsum_second_vec[iphi-1][sign][ibin]+=etsum_second;
 	graphs[ieta-1].nhits_second_vec[iphi-1][sign][ibin]+=nhits_second;
       }
-      //      cout<<miscal_vec[ibin]<<" "<<graphs[ieta-1].etsum_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_vec[iphi-1][sign][ibin]<<" "<<
-      //	graphs[ieta-1].etsum_first_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_first_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].etsum_second_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_second_vec[iphi-1][sign][ibin]<<" "<<ibin<<endl;
+      //	cout<<miscal_vec[ibin]<<" "<<graphs[ieta-1].etsum_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_vec[iphi-1][sign][ibin]<<" "<<
+      //	      graphs[ieta-1].etsum_first_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_first_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].etsum_second_vec[iphi-1][sign][ibin]<<" "<<graphs[ieta-1].nhits_second_vec[iphi-1][sign][ibin]<<" "<<ibin<<endl;
+
       ibin++;
-      if(ibin==kNMiscalBinsEB) ibin=0;
+      oldEta=ieta;
+      oldPhi=iphi;
+      oldSign=sign;
+
    }
 
-   nHitsMeanXtal=nHitsMeanXtal/counter;
-   cout<<"nHitsMean Xtal: "<<nHitsMeanXtal<<endl;
-
+   //   nHitsMeanXtal=nHitsMeanXtal/counter;
+   cout<<"nHitsMean Xtal ieta 1: "<<nHitsMeanXtalIeta1<<endl; 
+   cout<<"nHitsMean Xtal ieta 85: "<<nHitsMeanXtalIeta85<<endl; 
 
    TFile *kFactorFitterFile=TFile::Open(outFileName,"recreate");
 
@@ -133,12 +158,36 @@ void kFactorFitter2::Loop()
 	 
 
    for(int iieta=0;iieta<kBarlRings;++iieta){
+	 for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){
+	   graphs[iieta].etmean_ring[iibin]=(float)graphs[iieta].etsum_ring[iibin]/graphs[iieta].nhits_ring[iibin]-0.25;
+	 }
+
+	 float middleBinEnergyMean_ring=(float)graphs[iieta].etmean_ring[middlebin];
+	 for(int iibin=0;iibin<kNMiscalBinsEB;++iibin){
+	   graphs[iieta].etmean_ring[iibin]=(float)graphs[iieta].etmean_ring[iibin]/middleBinEnergyMean_ring-1;
+	 }
+	 
+	 stringstream name_et_mean_ring;
+	 name_et_mean_ring<<"etmean_ring_"<<iieta+1;
+	 graphs[iieta].kFactorGraph_ring=new TGraph (kNMiscalBinsEB,miscal_vec,graphs[iieta].etmean_ring);
+	 graphs[iieta].kFactorGraph_ring->SetName(name_et_mean_ring.str().c_str());
+	 graphs[iieta].kFactorGraph_ring->SetTitle(name_et_mean_ring.str().c_str());
+	 graphs[iieta].kFactorGraph_ring->Fit("pol1","Q");
+	 //	 int theSign=iisign>0 ? 1 : -1;
+	 //	 xtalkMeanMap.Fill(iiphi+1,(iieta+1)*theSign,graphs[iieta].kFactorGraph_ring->GetFunction("pol1")->GetParameter(1));
+	 //	 xtalChiMeanMap.Fill(iiphi+1,(iieta+1)*theSign,graphs[iieta].kFactorGraph_ring->GetFunction("pol1")->GetChisquare());
+	 graphs[iieta].kFactorGraph_ring->Write();
+	 cout<<"kFactor ieta="<<iieta<<" "<<graphs[iieta].kFactorGraph_ring->GetFunction("pol1")->GetParameter(1)<<endl;
+	 delete graphs[iieta].kFactorGraph_ring;
+
+
+
      for(int iiphi=0;iiphi<kBarlWedges;++iiphi){
        for(int iisign=0;iisign<kSides;++iisign){
 	 if(graphs[iieta].etsum_vec[iiphi][iisign][middlebin]!=0){
 	 
 	 for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){
-	   graphs[iieta].etmean_vec[iiphi][iisign][iibin]=(float)graphs[iieta].etsum_vec[iiphi][iisign][iibin]/graphs[iieta].nhits_vec[iiphi][iisign][iibin];
+	   graphs[iieta].etmean_vec[iiphi][iisign][iibin]=(float)graphs[iieta].etsum_vec[iiphi][iisign][iibin]/graphs[iieta].nhits_vec[iiphi][iisign][iibin]-0.25;
 	 }
 
 	 float middleBinEnergyMean=(float)graphs[iieta].etmean_vec[iiphi][iisign][middlebin];
@@ -155,12 +204,13 @@ void kFactorFitter2::Loop()
 	 graphs[iieta].kFactorGraphsMean_barl[iiphi][iisign]->Fit("pol1","Q");
 	 int theSign=iisign>0 ? 1 : -1;
 	 xtalkMeanMap.Fill(iiphi+1,(iieta+1)*theSign,graphs[iieta].kFactorGraphsMean_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1));
+	 xtalChiMeanMap.Fill(iiphi+1,(iieta+1)*theSign,graphs[iieta].kFactorGraphsMean_barl[iiphi][iisign]->GetFunction("pol1")->GetChisquare());
 	 graphs[iieta].kFactorGraphsMean_barl[iiphi][iisign]->Write();
 
 	 delete graphs[iieta].kFactorGraphsMean_barl[iiphi][iisign];
 
 
-
+	 /*
 	   // cout<<graphs[iieta].etsum_vec[iiphi][iisign][middlebin]<<endl;	   
 	   float middleBinEnergySum=(float)graphs[iieta].etsum_vec[iiphi][iisign][middlebin];
 	    for(int iibin=0;iibin<kNMiscalBinsEB;++iibin){
@@ -183,9 +233,10 @@ void kFactorFitter2::Loop()
 	 delete graphs[iieta].kFactorGraphsSum_barl[iiphi][iisign];
 
 
-	 
+	 */
 	 }
 
+	 /*
 	 if(graphs[iieta].nhits_vec[iiphi][iisign][middlebin]!=0){
 	   float middleBinNhits=(float)graphs[iieta].nhits_vec[iiphi][iisign][middlebin];
 	   for(int iibin=0;iibin<kNMiscalBinsEB;++iibin){
@@ -241,7 +292,30 @@ void kFactorFitter2::Loop()
 	   
 	   delete graphs[iieta].kFactorGraphsRatioMean_barl[iiphi][iisign];
 
+
+	   //kfactors nhits_second/nhits_first
+	   for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){//ratio of the mean energy
+	     graphs[iieta].ratio_nhits_vec[iiphi][iisign][iibin]=graphs[iieta].nhits_second_vec[iiphi][iisign][iibin]/graphs[iieta].nhits_first_vec[iiphi][iisign][iibin];
+	   }
 	   
+	   float middleBinRatioNhits=(float)graphs[iieta].ratio_nhits_vec[iiphi][iisign][middlebin];
+
+	   for(int iibin=0;iibin<kNMiscalBinsEB;++iibin){
+	   graphs[iieta].ratio_nhits_vec[iiphi][iisign][iibin]=(float)graphs[iieta].ratio_nhits_vec[iiphi][iisign][iibin]/middleBinRatioNhits-1;
+	   }
+	   
+	   stringstream name_nhits_ratio;
+	   name_nhits_ratio<<"nhitsRatio_"<<iieta+1<<"_"<<iiphi+1<<"_"<<iisign;
+	   graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]=new TGraph (kNMiscalBinsEB,miscal_vec,graphs[iieta].ratio_nhits_vec[iiphi][iisign]);
+	   graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]->SetName(name_nhits_ratio.str().c_str());
+	   graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]->SetTitle(name_nhits_ratio.str().c_str());
+	   graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]->Fit("pol1","Q");
+	   xtalknHitsRatioMap.Fill(iiphi+1,(iieta+1)*theSign,graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]->GetFunction("pol1")->GetParameter(1));
+	   graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign]->Write();
+	   
+	   delete graphs[iieta].kFactorGraphsnHitsRatio_barl[iiphi][iisign];
+
+	   //kfactor etsum a/etsum b	   
 	   for(int iibin=0;iibin<kNMiscalBinsEB;iibin++){
 	     graphs[iieta].ratio_vec[iiphi][iisign][iibin]=(float)graphs[iieta].etsum_second_vec[iiphi][iisign][iibin]/graphs[iieta].etsum_first_vec[iiphi][iisign][iibin];
 	   }
@@ -265,7 +339,7 @@ void kFactorFitter2::Loop()
 	   delete graphs[iieta].kFactorGraphsRatio_barl[iiphi][iisign];
 	   
 	 }
-	 
+	 */
        }
      }
    }
@@ -276,6 +350,7 @@ void kFactorFitter2::Loop()
 
    xtalkSumMap.Write();
    xtalkMeanMap.Write();
+   xtalChiMeanMap.Write();
    xtalknHitsMap.Write();
    xtalkRatioMap.Write();
    xtalkRatioMeanMap.Write();
