@@ -76,10 +76,6 @@ void createLastTree::Loop()
 
 
 
-
-   
-
-
    TFile *outFile=TFile::Open(outFileName,"recreate");
    int timeVar=0,hitVar=0,ietaVar=0,iphiVar=0,signVar=0;
    float etVar=0,RMSetVar=0,etNoCorrVar=0,RMSetNoCorrVar=0,lcVar=0,RMSlcVar=0;
@@ -124,9 +120,11 @@ void createLastTree::Loop()
      }
    }
 
+
+   float offlineEtCut=0.25;
    for(int iisign=0;iisign<kSides;++iisign){
      for(int iieta=0;iieta<kBarlRings;++iieta){
-      
+       
        for(int iiphi=0;iiphi<kBarlWedges;++iiphi){
 	 for(int iinterval=0;iinterval<kIntervals;iinterval++){
 	  
@@ -136,11 +134,11 @@ void createLastTree::Loop()
 	     iphiVar=iiphi+1;
 	     timeVar=iinterval+1;
 	     signVar=iisign;
-	     etVar=sums[iinterval].energySum[iieta][iiphi][iisign]/sums[iinterval].nhit[iieta][iiphi][iisign];
+	     etVar=sums[iinterval].energySum[iieta][iiphi][iisign]/N-offlineEtCut;
 	     RMSetVar=sqrt(TMath::Abs(sums[iinterval].energySquared[iieta][iiphi][iisign]/N-pow(etVar,2)));
-	     etNoCorrVar=sums[iinterval].energyNoCorrSum[iieta][iiphi][iisign]/sums[iinterval].nhit[iieta][iiphi][iisign];
+	     etNoCorrVar=sums[iinterval].energyNoCorrSum[iieta][iiphi][iisign]/N-offlineEtCut;
 	     RMSetNoCorrVar=sqrt(TMath::Abs(sums[iinterval].energyNoCorrSquared[iieta][iiphi][iisign]/N-pow(etNoCorrVar,2)));
-	     lcVar=sums[iinterval].lasercorrSum[iieta][iiphi][iisign]/sums[iinterval].nhit[iieta][iiphi][iisign];
+	     lcVar=sums[iinterval].lasercorrSum[iieta][iiphi][iisign]/N;
 	     RMSlcVar=sqrt(TMath::Abs(sums[iinterval].lasercorrSquared[iieta][iiphi][iisign]/N-pow(lcVar,2)));
 	     hitVar=N;
 	     newTree->Fill();
