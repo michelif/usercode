@@ -75,6 +75,8 @@ public :
    Float_t         lcSum;
    Float_t         lcSquared;
 
+   Float_t kFactorRing[kBarlRings];
+     
    // List of branches
    TBranch        *b_time_interval;   //!
    TBranch        *b_nHits;   //!
@@ -97,6 +99,8 @@ public :
      float lasercorrSquared[kBarlRings][kBarlWedges][kSides];
      int nhit[kBarlRings][kBarlWedges][kSides];
 
+
+
     void reset()
     {
       for(int iisign=0;iisign<kSides;iisign++){
@@ -113,7 +117,6 @@ public :
       }
     }
      
-     
    };
 
    createLastTree(TTree *tree=0);
@@ -127,8 +130,8 @@ public :
    virtual void     Show(Long64_t entry = -1);
    void setLumiIntervals(const char* file);
    void setOutfile(const char* outFile);
-
-};
+   void setKFactorRing();
+     };
 
 #endif
 
@@ -167,6 +170,94 @@ void createLastTree::setOutfile(const char* file)
    outFileName=TString(file);
 }
 
+void createLastTree::setKFactorRing()
+{
+  kFactorRing[0]=1./0.245028;
+  kFactorRing[1]=1./0.26128;
+  kFactorRing[2]=1./0.273089;
+  kFactorRing[3]=1./0.2732;
+  kFactorRing[4]=1./0.283083;
+  kFactorRing[5]=1./0.259672;
+  kFactorRing[6]=1./0.272157;
+  kFactorRing[7]=1./0.283421;
+  kFactorRing[8]=1./0.279282;
+  kFactorRing[9]=1./0.287642;
+  kFactorRing[10]=1./0.257156;
+  kFactorRing[11]=1./0.26619;
+  kFactorRing[12]=1./0.274317;
+  kFactorRing[13]=1./0.273775;
+  kFactorRing[14]=1./0.284879;
+  kFactorRing[15]=1./0.272593;
+  kFactorRing[16]=1./0.273589;
+  kFactorRing[17]=1./0.262903;
+  kFactorRing[18]=1./0.262583;
+  kFactorRing[19]=1./0.260766;
+  kFactorRing[20]=1./0.281547;
+  kFactorRing[21]=1./0.2765;
+  kFactorRing[22]=1./0.283145;
+  kFactorRing[23]=1./0.279516;
+  kFactorRing[24]=1./0.274313;
+  kFactorRing[25]=1./0.273071;
+  kFactorRing[26]=1./0.283549;
+  kFactorRing[27]=1./0.286864;
+  kFactorRing[28]=1./0.289093;
+  kFactorRing[29]=1./0.291506;
+  kFactorRing[30]=1./0.281464;
+  kFactorRing[31]=1./0.284257;
+  kFactorRing[32]=1./0.289215;
+  kFactorRing[33]=1./0.288749;
+  kFactorRing[34]=1./0.290137;
+  kFactorRing[35]=1./0.29138;
+  kFactorRing[36]=1./0.289088;
+  kFactorRing[37]=1./0.290615;
+  kFactorRing[38]=1./0.288974;
+  kFactorRing[39]=1./0.285018;
+  kFactorRing[40]=1./0.289581;
+  kFactorRing[41]=1./0.290635;
+  kFactorRing[42]=1./0.291807;
+  kFactorRing[43]=1./0.289271;
+  kFactorRing[44]=1./0.280238;
+  kFactorRing[45]=1./0.287869;
+  kFactorRing[46]=1./0.286005;
+  kFactorRing[47]=1./0.287438;
+  kFactorRing[48]=1./0.288334;
+  kFactorRing[49]=1./0.279735;
+  kFactorRing[50]=1./0.279621;
+  kFactorRing[51]=1./0.278579;
+  kFactorRing[52]=1./0.273631;
+  kFactorRing[53]=1./0.27313;
+  kFactorRing[54]=1./0.264403;
+  kFactorRing[55]=1./0.264274;
+  kFactorRing[56]=1./0.271175;
+  kFactorRing[57]=1./0.269813;
+  kFactorRing[58]=1./0.270147;
+  kFactorRing[59]=1./0.266088;
+  kFactorRing[60]=1./0.253557;
+  kFactorRing[61]=1./0.255196;
+  kFactorRing[62]=1./0.246645;
+  kFactorRing[63]=1./0.246722;
+  kFactorRing[64]=1./0.243231;
+  kFactorRing[65]=1./0.252291;
+  kFactorRing[66]=1./0.243408;
+  kFactorRing[67]=1./0.238192;
+  kFactorRing[68]=1./0.238795;
+  kFactorRing[69]=1./0.224387;
+  kFactorRing[70]=1./0.243234;
+  kFactorRing[71]=1./0.239513;
+  kFactorRing[72]=1./0.232539;
+  kFactorRing[73]=1./0.231337;
+  kFactorRing[74]=1./0.217976;
+  kFactorRing[75]=1./0.223219;
+  kFactorRing[76]=1./0.230454;
+  kFactorRing[77]=1./0.227976;
+  kFactorRing[78]=1./0.231087;
+  kFactorRing[79]=1./0.229022;
+  kFactorRing[80]=1./0.222095;
+  kFactorRing[81]=1./0.225252;
+  kFactorRing[82]=1./0.221834;
+  kFactorRing[83]=1./0.220603;
+  kFactorRing[84]=1./0.200071; 
+}
 
 
 Int_t createLastTree::GetEntry(Long64_t entry)
