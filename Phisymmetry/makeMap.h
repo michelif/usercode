@@ -22,18 +22,18 @@ public :
    TString outFileName;
 
    // Declaration of leaf types
-   Int_t          nhit;
-   Int_t           ieta[MAXHITS];   //[nhit]
-   Int_t           iphi[MAXHITS];   //[nhit]
-   Float_t         lc_barl[MAXHITS];   //[nhit]
-   Float_t         et_barl[MAXHITS];   //[nhit]
+   Int_t          nhit_barl;
+   Int_t           ieta[MAXHITS];   //[nhit_barl]
+   Int_t           iphi[MAXHITS];   //[nhit_barl]
+   Float_t         lc_barl[MAXHITS];   //[nhit_barl]
+   Float_t         et_barl[MAXHITS];   //[nhit_barl]
    Int_t          unixtime;
    Int_t          run;
    Int_t          lumi;
    Int_t          eventid;
 
    // List of branches
-   TBranch        *b_nhit;   //!
+   TBranch        *b_nhit_barl;   //!
    TBranch        *b_ieta;   //!
    TBranch        *b_iphi;   //!
    TBranch        *b_lc_barl;   //!
@@ -122,7 +122,7 @@ void makeMap::Init(TTree *tree)
    fCurrent = -1;
    fChain->SetMakeClass(1);
 
-   fChain->SetBranchAddress("nhit", &nhit, &b_nhit);
+   fChain->SetBranchAddress("nhit_barl", &nhit_barl, &b_nhit_barl);
    fChain->SetBranchAddress("ieta", ieta, &b_ieta);
    fChain->SetBranchAddress("iphi", iphi, &b_iphi);
    fChain->SetBranchAddress("lc_barl", lc_barl, &b_lc_barl);

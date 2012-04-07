@@ -85,22 +85,16 @@ void makeMap::Loop()
      
 
      if(theMap[make_pair(run,lumi)].first ==0 ) {
-       theMap[make_pair(run,lumi)].first=nhit;
+       theMap[make_pair(run,lumi)].first=nhit_barl;
        theMap[make_pair(run,lumi)].second=unixtime;
        theMapTime[make_pair(run,lumi)]=1;
        //       cout<<theMap[make_pair(run,lumi)].second<<" "<<       theMap[make_pair(run,lumi)].first<<" unixtime "<<unixtime<<endl;
 
      }else{
        //       cout<<"before "<<theMap[make_pair(run,lumi)].second<<"add";
-       theMap[make_pair(run,lumi)].first+=(int)nhit;
+       theMap[make_pair(run,lumi)].first+=(int)nhit_barl;
        theMap[make_pair(run,lumi)].second+=unixtime;
        theMapTime[make_pair(run,lumi)]++;
-       //       long int add=(int)theMap[make_pair(run,lumi)].second;
-       //long int dummy=((int)unixtime*((unsigned int)nhit));  
-       //       add+=unixtime*((unsigned int)nhit);
-       //       theMap[make_pair(run,lumi)].second =add+dummy;
-       //       cout<<" nhit "<<nhit<<" unixtime*nhit "<<nhit*unixtime<<" result "<<       theMap[make_pair(run,lumi)].second<<"counter"<< theMapTime[make_pair(run,lumi)]<<endl;
-       //       cout<<theMap[make_pair(run,lumi)].second<<" "<<       theMap[make_pair(run,lumi)].first<<" unixtime "<<unixtime<<endl;
      }
      //     cout<<"Run "<<run<<" LS"<<lumi<<theMap[make_pair(run,lumi)]<<endl;
      
