@@ -76,7 +76,7 @@ void kFactorFitter_endc::Loop()
      float middleBinEtSum=(float)graphs.etsum_ring[iring][middlebin];
      for(int iibin=0;iibin<kNMiscalBinsEE;++iibin){
        graphs.etsum_ring[iring][iibin]=(float)graphs.etsum_ring[iring][iibin]/middleBinEtSum-1;
-       cout<<graphs.etsum_ring[iring][iibin]<<endl; 
+       //       cout<<graphs.etsum_ring[iring][iibin]<<endl; 
      }
      
      stringstream name_etsum_ring;
