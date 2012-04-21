@@ -63,6 +63,13 @@ void kFactorFitter_endc::Loop()
    TFile *kFactorFitterFile=TFile::Open(outFileName,"recreate");
 
    kFactorFitterFile->cd();
+   int ring_index;
+   float kfactor_;
+
+   TTree* outTree= new TTree("kFactors_endc","kFactors_endc");
+   outTree->Branch("ring",&ring_index,"ring/I");
+   outTree->Branch("kfactor",&kfactor_,"kfactor/F");
+
    int middlebin =  int (kNMiscalBinsEE/2);
    
    for(int iring=0;iring<kRings;++iring){
@@ -79,12 +86,17 @@ void kFactorFitter_endc::Loop()
      graphs.kFactorGraphsSum_endc[iring]->SetTitle(name_etsum_ring.str().c_str());
      graphs.kFactorGraphsSum_endc[iring]->Fit("pol1","Q");
      graphs.kFactorGraphsSum_endc[iring]->Write();
+     ring_index=iring+1;
+     kfactor_=graphs.kFactorGraphsSum_endc[iring]->GetFunction("pol1")->GetParameter(1);
+     outTree->Fill();
      cout<<"kFactor iring="<<iring<<" "<<graphs.kFactorGraphsSum_endc[iring]->GetFunction("pol1")->GetParameter(1)<<endl;
      delete graphs.kFactorGraphsSum_endc[iring];
      
 
 
    }
+
+   outTree->Write();
    kFactorFitterFile->Close();
 
 }
