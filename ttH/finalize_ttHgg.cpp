@@ -44,7 +44,7 @@ int main( int argc, char* argv[] ) {
 
   }else if( dataset=="DATA_Run2012_FULL" ) {
     runOnMC=false;
-    finalize_oneDataset("Photon-Run2012A-13Jul2012-v1", selectionType, bTaggerType, datasets); 
+    finalize_oneDataset("DoublePhoton-Run2012C-13Jul2012-v1_b", selectionType, bTaggerType, datasets); 
     finalize_oneDataset("DoublePhoton-Run2012B-13Jul2012-v1", selectionType, bTaggerType, datasets); 
     finalize_oneDataset("DoublePhoton-Run2012C-13Jul2012-v2", selectionType, bTaggerType, datasets); 
     finalize_oneDataset("Photon-Run2012A-13Jul2012-v1", selectionType, bTaggerType, datasets); 
@@ -141,9 +141,11 @@ void finalize_oneDataset( const std::string& dataset, const std::string& selecti
   //  rf->set_redNtpDir("/xrootdfs/cms/local/pandolf/HiggsGammaGamma/reduced/redntp.52xv5_VH_feasibility.cicpfloose.regrPho_eCorr_20062012.VH_feasibility_v0/merged"); 
 
   if (runOnMC){
-    rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.52xv5.cicpfloose.scales-Lisbon-Hgg.ttH_feasibility_v1/merged"); //MC
+        rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.52xv5.cicpfloose.scales-Lisbon-Hgg.ttH_feasibility_v1/merged"); //MC
+    //    rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.52xv5.preselectionCS.scales-Lisbon-Hgg.ttH_feasibility_v1/merged"); //MC
   }else{
-    rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.53xv1_data.cicpfloose.scales-Lisbon-Hgg.ttH_feasibility_v1/merged/"); //Data
+       rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.53xv1_data.cicpfloose.scales-Lisbon-Hgg.ttH_feasibility_v1/merged/"); //Data
+    //rf->set_redNtpDir("/xrootdfs/cms/local/micheli/Higgs/reduced/redntp.53xv1_data.preselectionCS.scales-Lisbon-Hgg.ttH_feasibility_v1/merged/"); //Data
   }
   rf->addFile(dataset);
   rf->finalize();
@@ -179,7 +181,7 @@ void do_haddCommand( const std::string& dataset, std::vector<std::string> *datas
 
 std::string getSingleFileName( const std::string& dataset, const std::string& selectionType, const std::string& bTaggerType ) {
 
-  std::string fileName = "ttHgg_" + dataset + "_" + selectionType + "_" + bTaggerType + ".root";
+  std::string fileName = "ttHgg_" + dataset + "_" +selectionType + "_" + bTaggerType + ".root";
   return fileName;
 
 }

@@ -166,6 +166,10 @@ void RedNtpFinalizer_ttHgg::finalize()
    TH1D* h1_mgg= new TH1D("mgg", "", 80, 100., 180.);
    h1_mgg->Sumw2();
 
+   TH1D* h1_mgg_scaled= new TH1D("mgg_scaled", "", 80, 100., 180.);
+   h1_mgg_scaled->Sumw2();
+
+
    TH1D* h1_mgg_0btag = new TH1D("mgg_0btag", "", 80, 100., 180.);
    h1_mgg_0btag->Sumw2();
    TH1D* h1_mgg_1btag = new TH1D("mgg_1btag", "", 80, 100., 180.);
@@ -286,6 +290,14 @@ void RedNtpFinalizer_ttHgg::finalize()
    float etaPhot1_t;
    float etaPhot2_t;
    float mgg_t;
+   float pt_scaled_weight_t;
+   float pt_scaled_2D_weight_t;
+   float ptPhot1_scaled_weight_t;
+   float ptPhot2_scaled_weight_t;
+   float eta_scaled_weight_t;
+   float eta_scaled_2D_weight_t;
+   float etaPhot1_scaled_weight_t;
+   float etaPhot2_scaled_weight_t;
    float ptgg_t;
    float ptJet1_t;
    float ptJet2_t;
@@ -335,6 +347,14 @@ void RedNtpFinalizer_ttHgg::finalize()
    tree_passedEvents->Branch( "etaPhot1", &etaPhot1_t, "etaPhot1_t/F" );
    tree_passedEvents->Branch( "etaPhot2", &etaPhot2_t, "etaPhot2_t/F" );
    tree_passedEvents->Branch( "mgg", &mgg_t, "mgg_t/F" );
+   tree_passedEvents->Branch( "ptPhot1_scaled_weight", &ptPhot1_scaled_weight_t, "ptPhot1_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "ptPhot2_scaled_weight", &ptPhot2_scaled_weight_t, "ptPhot2_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "pt_scaled_weight", &pt_scaled_weight_t, "pt_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "pt_scaled_2D_weight", &pt_scaled_2D_weight_t, "pt_scaled_2D_weight_t/F" );
+   tree_passedEvents->Branch( "etaPhot1_scaled_weight", &etaPhot1_scaled_weight_t, "etaPhot1_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "etaPhot2_scaled_weight", &etaPhot2_scaled_weight_t, "etaPhot2_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "eta_scaled_weight", &eta_scaled_weight_t, "eta_scaled_weight_t/F" );
+   tree_passedEvents->Branch( "eta_scaled_2D_weight", &eta_scaled_2D_weight_t, "eta_scaled_2D_weight_t/F" );
    tree_passedEvents->Branch( "ptgg", &ptgg_t, "ptgg_t/F" );
    tree_passedEvents->Branch( "ptJet1", &ptJet1_t, "ptJet1_t/F" );
    tree_passedEvents->Branch( "ptJet2", &ptJet2_t, "ptJet2_t/F" );
@@ -382,6 +402,40 @@ void RedNtpFinalizer_ttHgg::finalize()
 
    //   std::string qglFileName = "/afs/cern.ch/work/p/pandolf/CMSSW_5_2_5/src/UserCode/pandolf/QGLikelihood/QG_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1.root";
    std::string qglFileName="/afs/cern.ch/work/m/micheli/pand/CMSSW_5_2_4/src/UserCode/pandolf/QGLikelihood/QG_QCD_Pt-15to3000_TuneZ2_Flat_8TeV_pythia6_Summer12-PU_S7_START52_V9-v1.root";
+
+   //pt reweight for photons
+   std::string ptweightPhot1FileName="scales_ptphot1_4GeVbinning.root";
+   std::string ptweightPhot2FileName="scales_ptphot2_4GeVbinning.root";
+
+   //2D weights 
+   std::string ptweight2DFileName="scales_2D_pt_preselectionCS_onlyPhotonCuts_8GeVbinning.root";
+
+
+   TFile* ptweightPhot1File=TFile::Open(ptweightPhot1FileName.c_str());
+   TFile* ptweightPhot2File=TFile::Open(ptweightPhot2FileName.c_str());
+   TFile* ptweight2DFile=TFile::Open(ptweight2DFileName.c_str());
+
+
+   TH1F* h1_ptweight_phot1=(TH1F*)ptweightPhot1File->Get("h_phot1_straight");
+   TH1F* h1_ptweight_phot2=(TH1F*)ptweightPhot2File->Get("h_phot2_straight");
+   TH1F* h2_ptweight=(TH1F*)ptweight2DFile->Get("h2D_pt_straight");
+
+   //eta reweight for photons
+   std::string etaweightPhot1FileName="scales_etaphot1_01binning.root";
+   std::string etaweightPhot2FileName="scales_etaphot2_01binning.root";
+
+   //2D weights
+   std::string etaweight2DFileName="scales_2D_eta_2-4Jets_01binning.root";
+
+   TFile* etaweightPhot1File=TFile::Open(etaweightPhot1FileName.c_str());
+   TFile* etaweightPhot2File=TFile::Open(etaweightPhot2FileName.c_str());
+   TFile* etaweight2DFile=TFile::Open(etaweight2DFileName.c_str());
+
+   TH1F* h1_etaweight_phot1=(TH1F*)etaweightPhot1File->Get("h_phot1_eta_straight");
+   TH1F* h1_etaweight_phot2=(TH1F*)etaweightPhot2File->Get("h_phot2_eta_straight");
+   TH1F* h2_etaweight=(TH1F*)etaweight2DFile->Get("h2D_eta_straight");
+
+
    QGLikelihoodCalculator *qglikeli = new QGLikelihoodCalculator( qglFileName );
 
    float Zmass = 91.19;
@@ -458,7 +512,7 @@ void RedNtpFinalizer_ttHgg::finalize()
       //if(npu>=30) continue;
 
       // if(massggnewvtx<90 || massggnewvtx>190) continue;
-      if(diphot.M()<100 || diphot.M()>180) continue;
+      //      if(diphot.M()<100 || diphot.M()>180) continue;
 
       if((TMath::Abs(etascphot1)>1.4442&&TMath::Abs(etascphot1)<1.566)||(TMath::Abs(etascphot2)>1.4442&&TMath::Abs(etascphot2)<1.566)
          || TMath::Abs(etascphot1)>2.5 || TMath::Abs(etascphot2)>2.5) continue;  // acceptance
@@ -536,8 +590,31 @@ void RedNtpFinalizer_ttHgg::finalize()
        h1_mgg_prepresel->Fill( massggnewvtx, eventWeight );
 
 
-       // jets
 
+       if(selectionType_=="onlyPhotonCuts" || selectionType_=="onlyPhotonCuts_inverted"){
+	 if(diphot.M()<100 || diphot.M()>180) continue;
+	 ptPhot1_t = ptphot1;
+	 ptPhot2_t = ptphot2;
+	 etaPhot1_t = etaphot1;
+	 etaPhot2_t = etaphot2;
+	 mgg_t = diphot.M();
+	 ptgg_t = diphot.Pt();
+	 double ptweight2D=h2_ptweight->GetBinContent(h2_ptweight->GetXaxis()->FindBin(ptphot2),h2_ptweight->GetYaxis()->FindBin(ptphot1));
+	 double etaweight2D=h2_etaweight->GetBinContent(h2_etaweight->GetXaxis()->FindBin(etaphot2),h2_etaweight->GetYaxis()->FindBin(etaphot1));
+       if(selectionType_.find("inverted")!=string::npos){//if not inverted do not apply corrections. useful for plots
+	 pt_scaled_2D_weight_t=eventWeight*ptweight2D;
+	 eta_scaled_2D_weight_t=eventWeight*etaweight2D;
+       }else{
+	 pt_scaled_2D_weight_t=eventWeight;
+	 eta_scaled_2D_weight_t=eventWeight;
+       }
+
+	 tree_passedEvents->Fill();
+	 continue;
+       }
+
+
+       // jets
        int njets_selected = 0;
        int njets_selected_btagloose = 0;
        int njets_selected_btagmedium = 0;
@@ -548,7 +625,7 @@ void RedNtpFinalizer_ttHgg::finalize()
 
        for( unsigned ijet=0; ijet<njets; ++ijet ) {
 
-//std::cout << ijet << "/" << njets << " pt: " << ptcorrjet[ijet] << " eta: " << etajet[ijet] << std::endl;
+	 //std::cout << ijet << "/" << njets << " pt: " << ptcorrjet[ijet] << " eta: " << etajet[ijet] << std::endl;
          if( ptcorrjet[ijet] < ptjetthresh_count_ ) continue;
          if( fabs(etajet[ijet]) > etajetthresh_count_ ) continue;
 
@@ -593,10 +670,14 @@ void RedNtpFinalizer_ttHgg::finalize()
 
        } //for jets
 
-
+       //       cout<<njets_selected<<"------"<<endl;
        if(njets_selected<njets_thresh_) continue;
+       if(njets_selected>njets_upper_thresh_)continue;
        if(njets_selected_btagloose<nbtagloose_thresh_) continue;
        if(njets_selected_btagmedium<nbtagmedium_thresh_) continue;
+       if(noBTagMedium_){
+	 if(njets_selected_btagmedium>0)continue;
+       };
        int isLeptonic= (ptele1>0 || ptmu1>0);
        if (isLeptonic<isLeptonic_thresh_) continue;
        if(leptonVeto_){
@@ -630,9 +711,9 @@ void RedNtpFinalizer_ttHgg::finalize()
          }
        }
 
+      
 
        if( index_selected.size()<2 ) continue;
-
        h1_mgg_presel->Fill( massggnewvtx, eventWeight );
 
 
@@ -964,7 +1045,44 @@ void RedNtpFinalizer_ttHgg::finalize()
 
 
        h1_mgg->Fill( massggnewvtx, eventWeight );
+       double ptweightPhot1=h1_ptweight_phot1->GetBinContent(h1_ptweight_phot1->GetXaxis()->FindBin(ptphot1));
+       double ptweightPhot2=h1_ptweight_phot2->GetBinContent(h1_ptweight_phot2->GetXaxis()->FindBin(ptphot2));
+       double ptweight2D=h2_ptweight->GetBinContent(h2_ptweight->GetXaxis()->FindBin(ptphot2),h2_ptweight->GetYaxis()->FindBin(ptphot1));
 
+       double etaweightPhot1=h1_etaweight_phot1->GetBinContent(h1_etaweight_phot1->GetXaxis()->FindBin(etaphot1));
+       double etaweightPhot2=h1_etaweight_phot2->GetBinContent(h1_etaweight_phot2->GetXaxis()->FindBin(etaphot2));
+       double etaweight2D=h2_etaweight->GetBinContent(h2_etaweight->GetXaxis()->FindBin(etaphot2),h2_etaweight->GetYaxis()->FindBin(etaphot1));
+
+
+       if(selectionType_.find("inverted")!=string::npos){//if not inverted do not apply corrections. useful for plots
+	 h1_mgg_scaled->Fill( massggnewvtx, eventWeight*ptweightPhot1*ptweightPhot2 );
+
+	 pt_scaled_weight_t=eventWeight*ptweightPhot1*ptweightPhot2;
+	 ptPhot1_scaled_weight_t=eventWeight*ptweightPhot1;
+	 ptPhot2_scaled_weight_t=eventWeight*ptweightPhot2;
+	 pt_scaled_2D_weight_t=eventWeight*ptweight2D;
+
+	 eta_scaled_weight_t=eventWeight*etaweightPhot1*etaweightPhot2;
+	 etaPhot1_scaled_weight_t=eventWeight*etaweightPhot1;
+	 etaPhot2_scaled_weight_t=eventWeight*etaweightPhot2;
+	 eta_scaled_2D_weight_t=eventWeight*etaweight2D;
+
+       }else{
+	 h1_mgg_scaled->Fill(massggnewvtx, eventWeight );
+	 pt_scaled_weight_t=eventWeight;
+	 ptPhot1_scaled_weight_t=eventWeight;
+	 ptPhot2_scaled_weight_t=eventWeight;
+	 pt_scaled_2D_weight_t=eventWeight;
+
+	 eta_scaled_weight_t=eventWeight;
+	 etaPhot1_scaled_weight_t=eventWeight;
+	 etaPhot2_scaled_weight_t=eventWeight;
+	 eta_scaled_2D_weight_t=eventWeight;
+       }
+
+
+       //       std::cout<<massggnewvtx<<" "<<mgg_scaled<<std::endl;
+       //std::cout<<"ptweightPhot0 "<<ptweightPhot0<<"ptweightPhot1 "<<ptweightPhot1<<std::endl;
 
        TLorentzVector Vstar = dijet + diphot;
        TLorentzVector Vstar_kinfit = dijet_kinfit + diphot;
@@ -978,7 +1096,7 @@ void RedNtpFinalizer_ttHgg::finalize()
        h1_ptVstar_kinfit->Fill( Vstar_kinfit.Pt(), eventWeight );
        h1_etaVstar_kinfit->Fill( Vstar_kinfit.Eta(), eventWeight );
        h1_phiVstar_kinfit->Fill( Vstar_kinfit.Phi(), eventWeight );
-
+   
        //leptons
        h1_ptele1->Fill(ptele1,eventWeight);
        h1_ptele2->Fill(ptele2,eventWeight);
@@ -1015,6 +1133,7 @@ void RedNtpFinalizer_ttHgg::finalize()
        chiSquareProbMax_t = chiSquareProbMax;
        absCosThetaStar_t = fabs(cosThetaStar);
 
+       //       cout<<njets_t<<" "<<njets_selected<<endl;
 
        //       std::cout<<Ht<<" "<<ptPhot1_t+ptPhot2_t+ptJet1_t+ptJet2_t+ptJet3_t+ptJet4_t+ptJet5_t+ptJet6_t+ptJet7_t+ptJet8_t+ptJet9_t+ptJet10_t<<std::endl;
        //       std::cout<<ptPhot1_t<<" "<<ptPhot2_t<<" "<<ptJet1_t<<" "<<ptJet2_t<<" "<<ptJet3_t<<" "<<ptJet4_t<<" "<<ptJet5_t<<" "<<ptJet6_t<<" "<<ptJet7_t<<" "<<ptJet8_t<<" "<<ptJet9_t<<" "<<ptJet10_t<<std::endl;
@@ -1106,6 +1225,7 @@ void RedNtpFinalizer_ttHgg::finalize()
    h1_mgg_prepresel->Write();
    h1_mgg_presel->Write();
    h1_mgg->Write();
+   h1_mgg_scaled->Write();
    h1_mgg_0btag->Write();
    h1_mgg_1btag->Write();
    h1_mgg_2btag->Write();
@@ -1638,12 +1758,14 @@ void RedNtpFinalizer_ttHgg::setSelectionType( const std::string& selectionType )
 
   //threshold added for ttH
   njets_thresh_=0;
+  njets_upper_thresh_=15;
   nbtagloose_thresh_=0;
   nbtagmedium_thresh_=0;
   isLeptonic_thresh_=0;
   Ht_thresh_=0;
   leptonVeto_=false;
   invert_photonCuts_=false;
+  noBTagMedium_=false;
 
   if( selectionType=="presel" ) {
 
@@ -1830,6 +1952,18 @@ void RedNtpFinalizer_ttHgg::setSelectionType( const std::string& selectionType )
 
     njets_thresh_=3;
     isLeptonic_thresh_=1;    
+  } else if ( selectionType=="ttHsel3Jets1LeptonBTagVeto_inverted" ){
+
+    invert_photonCuts_=true;
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 4;
+
+    noBTagMedium_=true;
+    njets_thresh_=3;
+    isLeptonic_thresh_=1;    
   } else if ( selectionType=="ttHsel3Jets1Lepton1BtagMedium" ){
 
     ptphot1cut_ = 33.;
@@ -1852,6 +1986,19 @@ void RedNtpFinalizer_ttHgg::setSelectionType( const std::string& selectionType )
     photonID_thresh_ = 4;
 
     njets_thresh_=5;
+
+    nbtagmedium_thresh_=1;
+    leptonVeto_=true;
+
+  } else if ( selectionType=="ttHsel2JetsBtagMediumLeptonVeto" ){
+
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 2;
+
+    njets_thresh_=2;
 
     nbtagmedium_thresh_=1;
     leptonVeto_=true;
@@ -1879,6 +2026,93 @@ void RedNtpFinalizer_ttHgg::setSelectionType( const std::string& selectionType )
 
     invert_photonCuts_=true;
 
+    
+  }else if(selectionType=="2-4Jets_LeptonVeto"){
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 4;
+    njets_thresh_=2;
+    njets_upper_thresh_=4;
+
+    leptonVeto_=true;
+
+  } else if(selectionType=="4Jets_LeptonVeto"){
+  ptphot1cut_ = 33.;
+  ptphot2cut_ = 25.;
+
+
+  ptjetthresh_count_ = 25.;
+  photonID_thresh_ = 4;
+  njets_thresh_=4;
+  njets_upper_thresh_=4;
+
+
+  leptonVeto_=true;
+
+ }else if(selectionType=="2-4Jets_LeptonVeto_inverted"){
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 4;
+    njets_thresh_=2;
+    njets_upper_thresh_=4;
+
+    invert_photonCuts_=true;
+    leptonVeto_=true;
+
+  } else if(selectionType=="4Jets_LeptonVeto_inverted"){
+  ptphot1cut_ = 33.;
+  ptphot2cut_ = 25.;
+
+
+  ptjetthresh_count_ = 25.;
+  photonID_thresh_ = 4;
+  njets_thresh_=4;
+  njets_upper_thresh_=4;
+
+  invert_photonCuts_=true;
+  leptonVeto_=true;
+
+  }else if(selectionType=="onlyPhotonCuts"){
+  ptphot1cut_ = 33.;
+  ptphot2cut_ = 25.;
+
+
+  }else if(selectionType=="onlyPhotonCuts_inverted"){
+  ptphot1cut_ = 33.;
+  ptphot2cut_ = 25.;
+  invert_photonCuts_=true;
+
+  }else if(selectionType=="1-4Jets_LeptonVeto"){
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 4;
+    njets_thresh_=1;
+    njets_upper_thresh_=4;
+
+   
+    leptonVeto_=true;
+
+  }else if(selectionType=="1-4Jets_LeptonVeto_inverted"){
+    ptphot1cut_ = 33.;
+    ptphot2cut_ = 25.;
+
+
+    ptjetthresh_count_ = 25.;
+    photonID_thresh_ = 4;
+    njets_thresh_=1;
+    njets_upper_thresh_=4;
+
+    invert_photonCuts_=true;
+    leptonVeto_=true;
 
   } else {
     std::cout << std::endl << std::endl << "Selection '" << selectionType << "' currently not implemented. Exiting." << std::endl;
