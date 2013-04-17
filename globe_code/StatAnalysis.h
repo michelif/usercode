@@ -109,7 +109,7 @@ class StatAnalysis : public PhotonAnalysis
 				      std::vector<double> & mass_errors, std::vector<double> & mva_errors,
 				      std::vector<int>    & categories, std::vector<double> & weights);
     
-    bool VHmuevent, VHelevent, VBFevent, VHhadevent,VHhadBtagevent, VHmetevent,TTHhadevent,TTHlepevent;  //met at analysis step
+    bool VHmuevent, VHelevent, VBFevent, VHhadevent,VHhadBtagevent, VHmetevent,TTHhadevent,TTHlepevent,tHqLeptonicevent;  //met at analysis step
     bool VHlep1event, VHlep2event;
     int VHelevent_cat;
     int VHmuevent_cat;
@@ -158,6 +158,7 @@ class StatAnalysis : public PhotonAnalysis
     int nTTHlepCategories; 
     int nVHlepCategories; 
     int nVHmetCategories; 
+    int ntHqLeptonicCategories;
     
     // RooStuff
     RooContainer *rooContainer;

@@ -79,6 +79,8 @@ class PhotonAnalysis : public BaseAnalysis
     int nElectronCategories;
     int nMuonCategories;
     bool includeVHmet;  //met at analysis step
+    bool includetHqLeptonic;
+
     int nMetCategories;
 
     bool reRunCiCForData;
@@ -92,6 +94,7 @@ class PhotonAnalysis : public BaseAnalysis
     float leadEtTTHlepCut;
     float leadEtTTHhadCut;
     float leadEtVHlepCut;
+    float leadEttHqLeptonicCut;
     float leadEtVHmetCut;  //met at analysis step
     float subleadEtCut;
     float subleadEtVBFCut;
@@ -101,6 +104,7 @@ class PhotonAnalysis : public BaseAnalysis
     float subleadEtVHmetCut;  //met at analysis step
     float subleadEtTTHhadCut;
     float subleadEtTTHlepCut;
+    float subleadEttHqLeptonicCut;
     int nVBFEtaCategories;
     int nVHhadEtaCategories;
     int nVBFDijetJetCategories;
@@ -123,6 +127,19 @@ class PhotonAnalysis : public BaseAnalysis
     float ptgg_0tag_cut,costhetastar_0tag_cut,ptjet_0tag_cut;
     float ptjet_loosecut;
 
+    float deltaRPholep_cut;
+    bool doMinvCut;
+
+    float ptJets_ttH_thresh;
+    bool doDrGsfTrackCut;
+
+    float drSC_lep;
+    float    drGsf_lep;
+    int isLep_ele,isLep_mu;
+    int eleIndex,muIndex;
+
+    bool doApplyEleVeto;
+    bool removeBtagtth;
 
     // Preselection indexes
     float presel_scet1, presel_scet2, presel_maxeta;
@@ -365,6 +382,8 @@ class PhotonAnalysis : public BaseAnalysis
     float generatorPt_;
     float generatorY_;
 
+    void switchJetIdVertex(LoopAll &l, int ivtx);
+
  protected:
     void PreselectPhotons(LoopAll& l, int jentry);
     float GetSmearSigma(float eta, float r9, int epoch=0);
@@ -391,6 +410,8 @@ class PhotonAnalysis : public BaseAnalysis
     bool TTHleptonicTag2012(LoopAll& l, int diphoton_id, float* smeared_pho_energy=0, bool nm1=false, float eventweight=1, float myweight=1,bool *jetid_flags=0);
     //TTH leptonic category
     bool TTHhadronicTag2012(LoopAll& l, int diphoton_id, float* smeared_pho_energy=0, bool nm1=false, float eventweight=1, float myweight=1,bool *jetid_flags=0);
+    //tHqLeptonic category
+    bool tHqLeptonicTag(LoopAll& l, int diphoton_id, float* smeared_pho_energy=0, bool nm1=false, float eventweight=1, float myweight=1,bool *jetid_flags=0);
 
     //btag syst
     float BtagReweight(LoopAll& l);
@@ -471,7 +492,6 @@ class PhotonAnalysis : public BaseAnalysis
     // Jets
     JetHandler * jetHandler_;
     void postProcessJets(LoopAll & l, int vtx=-1);
-    void switchJetIdVertex(LoopAll &l, int ivtx);
 
     std::map<int, vector<double> > weights;
     int trigCounter_;

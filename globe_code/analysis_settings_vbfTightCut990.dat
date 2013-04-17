@@ -24,13 +24,19 @@ mvaVbfCatBoundaries=1.,0.990,0.93
 ## Singal mass points to book
 sigPointsToBook=105,110,115,120,125,130,135,140,145,150
 
+## Hadronic tHqLeptonic
+includetHqLeptonic=0
+leadEttHqLeptonicCut=60
+subleadEttHqLeptonicCut=25
+
+
 ## Hadronic TTH tag
-includeTTHhad=0
+includeTTHhad=1
 leadEtTTHhadCut=60
 subleadEtTTHhadCut=25
 
 ## Leptonic TTH tag
-includeTTHlep=0
+includeTTHlep=1
 leadEtTTHlepCut=60
 subleadEtTTHlepCut=25
 
@@ -106,3 +112,16 @@ rematchConversions=0
 
 doInterferenceSmear=1
 
+deltaRPholep_cut=0
+doMinvCut=0
+ptJets_ttH_thresh=25.
+doDrGsfTrackCut=1
+drSC_lep=0.5
+drGsf_lep=1.
+#doApplyEleVeto=0 
+#doDrGsfTrackCut=0 
+#drSC_lep=0.   
+#drGsf_lep=0.	   
+#doApplyEleVeto=1   
+shiftBtagEff=0
+removeBtagtth=0
