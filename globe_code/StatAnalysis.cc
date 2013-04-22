@@ -542,6 +542,8 @@ void StatAnalysis::buildBkgModel(LoopAll& l, const std::string & postfix)
 
     l.rooContainer->AddRealVar("CMS_hgg_plaw0"+postfix,0.01,-10,10);
 
+    l.rooContainer->AddRealVar("CMS_hgg_exp0"+postfix,-1,-10,0);//exp model
+
     // prefix for models parameters
     std::map<int,std::string> parnames;
     parnames[1] = "modlin";
@@ -572,7 +574,8 @@ void StatAnalysis::buildBkgModel(LoopAll& l, const std::string & postfix)
                     catpars.push_back( Form( "CMS_hgg_%s%d%s", parname.c_str(), iorder, +postfix.c_str() ) );
                 }
             } else {
-                if( catmodel != -1 || catmodel != -10) {
+		cout<<"catmodel:"<<catmodel<<endl;
+                if( catmodel != -1 && catmodel != -10 ) {
                     std::cout << "The only supported negative bkg poly orders are -1 and -10, ie 1-parmeter power law -10 exponential" << std::endl;
                     assert( 0 );
                 }
@@ -601,11 +604,15 @@ void StatAnalysis::buildBkgModel(LoopAll& l, const std::string & postfix)
             l.rooContainer->AddSpecificCategoryPdf(&catflags[0],"data_pol_model"+postfix,
                 "0","CMS_hgg_mass",catpars,70+catpars.size());
             // >= 71 means RooBernstein of order >= 1
-        } else {
+        } else if (modit->first == -1){
             l.rooContainer->AddSpecificCategoryPdf(&catflags[0],"data_pol_model"+postfix,
                 "0","CMS_hgg_mass",catpars,6);
             // 6 is power law
-        }
+        }else{
+            l.rooContainer->AddSpecificCategoryPdf(&catflags[0],"data_pol_model"+postfix,
+                "0","CMS_hgg_mass",catpars,1);
+	    // 1 is exp
+	}
     }
 }
 
