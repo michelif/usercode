@@ -551,6 +551,7 @@ void StatAnalysis::buildBkgModel(LoopAll& l, const std::string & postfix)
     parnames[5] = "modpol5_";
     parnames[6] = "modpol6_";
     parnames[-1] = "plaw";
+    parnames[-10] = "exp";//exp model
 
     // map order to categories flags + parameters names
     std::map<int, std::pair<std::vector<int>, std::vector<std::string> > > catmodels;
@@ -571,13 +572,18 @@ void StatAnalysis::buildBkgModel(LoopAll& l, const std::string & postfix)
                     catpars.push_back( Form( "CMS_hgg_%s%d%s", parname.c_str(), iorder, +postfix.c_str() ) );
                 }
             } else {
-                if( catmodel != -1 ) {
-                    std::cout << "The only supported negative bkg poly order is -1, ie 1-parmeter power law" << std::endl;
+                if( catmodel != -1 || catmodel != -10) {
+                    std::cout << "The only supported negative bkg poly orders are -1 and -10, ie 1-parmeter power law -10 exponential" << std::endl;
                     assert( 0 );
                 }
-                catpars.push_back( Form( "CMS_hgg_%s%d%s", parname.c_str(), 0, +postfix.c_str() ) );
+		if(catmodel == -1 ){
+		    catpars.push_back( Form( "CMS_hgg_%s%d%s", parname.c_str(), 0, +postfix.c_str() ) );
+		}else if(catmodel == -10 ){
+		    catpars.push_back( Form( "CMS_hgg_%s%d%s", parname.c_str(), 0, +postfix.c_str() ) );
+		}
+
             }
-        } else if ( catmodel != -1 ) {
+        } else if ( catmodel != -1 && catmodel != -10) {
             assert( catflags.size() == nCategories_ && catpars.size() == catmodel );
         }
         // chose category order
@@ -1330,10 +1336,15 @@ bool StatAnalysis::AnalyseEvent(LoopAll& l, Int_t jentry, float weight, TLorentz
 	    //	        cout<<"evrew"<<evweight<<endl;
 	}//shiftbtag end
 
+	bool isMC = l.itype[l.current]!=0;
 
-
+	if(isMC && applyLeptonSF && category == 6){
+	    //	    cout<<evweight;
+	    if(l.isLep_ele) evweight*=ElectronSFReweight(l);
+	    if(l.isLep_mu)  evweight*=MuonSFReweight(l);
+	    //	    cout<<" weighted "<<evweight<<endl;
 	//cout<<"runNumber: "<<l.run<<" LumiSection:"<<l.lumis<<" eventNumber:"<<l.event<<endl; 
-
+	}
 
 	return (category >= 0 && mass>=massMin && mass<=massMax);
 	if(FMDEBUG){
