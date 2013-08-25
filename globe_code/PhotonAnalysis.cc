@@ -80,9 +80,17 @@ PhotonAnalysis::PhotonAnalysis()  :
     jerShift = 0.;
     applyJecUnc = false;
     jecShift = 0.;
+    emulateJetResponse = false;
+    jetResponseLumiStep = 0.1;
     jetHandler_ = 0;
 
-    shiftBtagEff=0;
+    shiftBtagEffUp_bc=0;
+    shiftBtagEffDown_bc=0;
+    shiftBtagEffUp_l=0;
+    shiftBtagEffDown_l=0;
+
+    applyBtagSF=0;
+    applyLeptonSF=0;
     nBMC=0;
     nCMC=0;
     nLMC=0;      
@@ -101,11 +109,15 @@ PhotonAnalysis::PhotonAnalysis()  :
     deltaRPholep_cut=0.5;
     doMinvCut=false;
     ptJets_ttH_thresh=30.;
+    njets_tthHad_thresh=5;
 
     removeBtagtth=false;
+    createCS=false;
 
+
+    doLooseLep=false;
     doDrGsfTrackCut=false;
-    ptjet_loosecut=20.;
+    ptjet_loosecut=25.;
 
     drSC_lep=0.;
     drGsf_lep=0.;
@@ -134,6 +146,7 @@ PhotonAnalysis::PhotonAnalysis()  :
 
     saveDatacardTrees_=false;
     saveSpinTrees_=false;
+    saveVBFTrees_=false;
 
     mvaVbfSelection=false;
     mvaVbfUseDiPhoPt=true;
@@ -568,129 +581,142 @@ void PhotonAnalysis::Init(LoopAll& l)
 
     /// // trigger
 
-    // /cdaq/physics/Run2011/5e32/v4.2/HLT/V2
-    triggerSelections.push_back(TriggerSelection(160404,161176));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+    if (l.runZeeValidation) {
 
-    // /cdaq/physics/Run2011/5e32/v6.1/HLT/V1
-    triggerSelections.push_back(TriggerSelection(161216,165633));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon20_R9Id_Photon18_R9Id_v");
+	triggerSelections.push_back(TriggerSelection(1,-1));
+	if (useRunDTriggersForZee) {
+	    //use this if the validation includes runD
+	    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass70_v");
+	} else {
+	    //use this if the validation does not include runD
+	    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v");
+	}
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
 
-    // /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
-    triggerSelections.push_back(TriggerSelection(165970,166967));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+    } else {
 
-    // /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
-    triggerSelections.push_back(TriggerSelection(167039,173198));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+	// /cdaq/physics/Run2011/5e32/v4.2/HLT/V2
+	triggerSelections.push_back(TriggerSelection(160404,161176));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
 
-    // /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
-    triggerSelections.push_back(TriggerSelection(165970,166967));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+	// /cdaq/physics/Run2011/5e32/v6.1/HLT/V1
+	triggerSelections.push_back(TriggerSelection(161216,165633));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon20_R9Id_Photon18_R9Id_v");
 
-    // /cdaq/physics/Run2011/1e33/v2.3/HLT/V3
-    triggerSelections.push_back(TriggerSelection(167039,173198));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+	// /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
+	triggerSelections.push_back(TriggerSelection(165970,166967));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    // /cdaq/physics/Run2011/3e33/v1.1/HLT/V1
-    triggerSelections.push_back(TriggerSelection(173236,178380));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_CaloIdXL_IsoXL_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdXL_IsoXL_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+	// /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
+	triggerSelections.push_back(TriggerSelection(167039,173198));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    // /cdaq/physics/Run2011/5e33/v1.4/HLT/V3
-    triggerSelections.push_back(TriggerSelection(178420,190455));
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_CaloIdXL_IsoXL_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_R9IdT_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9IdT_Photon18_CaloIdXL_IsoXL_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9IdT_Photon18_R9IdT_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
+	// /cdaq/physics/Run2011/1e33/v2.3/HLT/V1
+	triggerSelections.push_back(TriggerSelection(165970,166967));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    triggerSelections.push_back(TriggerSelection(190456,194269));
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
+	// /cdaq/physics/Run2011/1e33/v2.3/HLT/V3
+	triggerSelections.push_back(TriggerSelection(167039,173198));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdL_IsoVL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_R9Id85_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_R9Id85_Mass60_v");
+	// /cdaq/physics/Run2011/3e33/v1.1/HLT/V1
+	triggerSelections.push_back(TriggerSelection(173236,178380));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_CaloIdXL_IsoXL_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_CaloIdXL_IsoXL_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id_Photon18_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
+	// /cdaq/physics/Run2011/5e33/v1.4/HLT/V3
+	triggerSelections.push_back(TriggerSelection(178420,190455));
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_CaloIdXL_IsoXL_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloIdXL_IsoXL_Photon18_R9IdT_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9IdT_Photon18_CaloIdXL_IsoXL_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9IdT_Photon18_R9IdT_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloIdL_IsoVL_Photon22_R9Id_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_CaloIdL_IsoVL_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id_Photon22_R9Id_v");
 
-    triggerSelections.push_back(TriggerSelection(194270,203767));
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass70_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
+	triggerSelections.push_back(TriggerSelection(190456,194269));
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
 
-    triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_R9Id85_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_CaloId10_Iso50_Mass60_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_R9Id85_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_R9Id85_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_R9Id85_Mass60_v");
 
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
 
-    triggerSelections.push_back(TriggerSelection(203768,-1));
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass70_v");
-    triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
-    triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
+	triggerSelections.push_back(TriggerSelection(194270,203767));
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass70_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
 
+	triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_CaloId10_Iso50_Photon18_R9Id85_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_CaloId10_Iso50_Mass60_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_Photon18_R9Id85_Mass60_v");
 
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
+
+	triggerSelections.push_back(TriggerSelection(203768,-1));
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_R9Id85_OR_CaloId10_Iso50_Mass70_v");
+	triggerSelections.back().addpath("HLT_Photon26_R9Id85_OR_CaloId10_Iso50_Photon18_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_CaloId10_Iso50_Photon22_R9Id85_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_R9Id85_OR_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_OR_CaloId10_Iso50_Photon22_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_CaloId10_Iso50_v");
+	triggerSelections.back().addpath("HLT_Photon36_R9Id85_Photon22_R9Id85_v");
+    }
 
     // n-1 plots for VBF tag 2011
     l.SetCutVariables("cut_VBFLeadJPt",         &myVBFLeadJPt);
@@ -1181,14 +1207,17 @@ void PhotonAnalysis::Init(LoopAll& l)
 	puTargetFile->Close();
     }
 
-    if( recomputeBetas || recorrectJets || rerunJetMva || recomputeJetWp || applyJer || applyJecUnc || l.typerun != l.kFill ) {
+    if( recomputeBetas || recorrectJets || rerunJetMva || recomputeJetWp || applyJer || applyJecUnc || emulateJetResponse 
+	|| l.typerun != l.kFill ) {
 	std::cout << "JetHandler: \n"
 		  << "recomputeBetas " << recomputeBetas << "\n"
 		  << "recorrectJets " << recorrectJets << "\n"
 		  << "rerunJetMva " << rerunJetMva << "\n"
-		  << "recomputeJetWp " << recomputeJetWp
+		  << "recomputeJetWp " << recomputeJetWp << "\n"
+		  << "emulateJetResponse " << emulateJetResponse
 		  << std::endl;
 	jetHandler_ = new JetHandler(jetHandlerCfg, l);
+	jetHandler_->setJetResponseStep(jetResponseLumiStep);
     }
 
     if( emulateBeamspot || reweighBeamspot ) {
@@ -1216,6 +1245,32 @@ void PhotonAnalysis::Init(LoopAll& l)
         cout << "InitRealPhotonAnalysis END"<<endl;
 
     // FIXME book of additional variables
+
+    // Initialize all MVA ---------------------------------------------------//
+    l.SetAllMVA();
+    // UCSD
+    l.tmvaReaderID_UCSD->BookMVA("Gradient"      ,photonLevelMvaUCSD.c_str()  );
+    l.tmvaReader_dipho_UCSD->BookMVA("Gradient"  ,eventLevelMvaUCSD.c_str()   );
+    // New ID MVA
+    if( photonLevelNewIDMVA_EB != "" && photonLevelNewIDMVA_EE != "" ) {
+    l.tmvaReaderID_Single_Barrel->BookMVA("AdaBoost",photonLevelNewIDMVA_EB.c_str());
+    l.tmvaReaderID_Single_Endcap->BookMVA("AdaBoost",photonLevelNewIDMVA_EE.c_str());
+    } else { 
+    assert( dataIs2011 );
+    }
+    // MIT 
+    if( photonLevelMvaMIT_EB != "" && photonLevelMvaMIT_EE != "" ) {
+    l.tmvaReaderID_MIT_Barrel->BookMVA("AdaBoost",photonLevelMvaMIT_EB.c_str());
+    l.tmvaReaderID_MIT_Endcap->BookMVA("AdaBoost",photonLevelMvaMIT_EE.c_str());
+    } else {
+    assert( ! dataIs2011 );
+    }
+    l.tmvaReader_dipho_MIT->BookMVA("Gradient"   ,eventLevelMvaMIT.c_str()    );
+    // ----------------------------------------------------------------------//
+
+
+
+
 
 }
 
@@ -1712,7 +1767,7 @@ void PhotonAnalysis::PreselectPhotons(LoopAll& l, int jentry)
 // ----------------------------------------------------------------------------------------------------
 void PhotonAnalysis::FillReductionVariables(LoopAll& l, int jentry)
 {
-    //    cout<<"myFillReduceVar START"<<endl;
+    cout<<"myFillReduceVar START"<<endl;
 
     PreselectPhotons(l,jentry);
 
@@ -1736,12 +1791,14 @@ void PhotonAnalysis::postProcessJets(LoopAll & l, int vtx)
 	    if( recorrectJets ) {
 		jetHandler_->recomputeJec(ijet, true);
 	    }
+	    if( emulateJetResponse && l.itype[l.current] != 0 ) {
+		jetHandler_->emulateJetResponse(ijet);
+	    }
 	    if( applyJer ) {
 		jetHandler_->applyJerUncertainty(ijet, jerShift);
 	    }
 	    if( applyJecUnc ) {
 		jetHandler_->applyJecUncertainty(ijet, jecShift);
-
 	    }
 	}
     }
@@ -2010,7 +2067,7 @@ bool PhotonAnalysis::SkimEvents(LoopAll& l, int jentry)
 
     // do not run trigger selection on MC
     int filetype = l.itype[l.current];
-    bool skipTrigger = !doTriggerSelection || filetype != 0 || triggerSelections.empty();
+    bool skipTrigger = !doTriggerSelection || ( filetype != 0 && !l.runZeeValidation ) || triggerSelections.empty();
 
     if( ! skipTrigger ) {
         // get the trigger selection for this run
@@ -2030,7 +2087,7 @@ bool PhotonAnalysis::SkimEvents(LoopAll& l, int jentry)
 	    }
 	} else {
 	    l.b_hlt_bit->GetEntry(jentry);
-	      l.b_hlt_path_names_HLT->GetEntry(jentry);
+	    l.b_hlt_path_names_HLT->GetEntry(jentry);
 	    if( !  isel->pass( *(l.hlt_path_names_HLT), *(l.hlt_bit) ) ) {
 		return false;
 	    }
@@ -2662,6 +2719,10 @@ bool PhotonAnalysis::ElectronTag2012B(LoopAll& l, int& diphotonVHlep_id, int& el
     bool localdebug=false;
 
     el_ind=l.ElectronSelectionMVA2012(elptcut);
+    l.el_ind=-1;
+    if(doLooseLep){
+	l.ElectronSelectionMVA2012_nocutOnMVA(elptcut);
+    }
     if(el_ind!=-1) {
         if(localdebug) cout<<"in ElectronTag2012B and selected "<<el_ind<<endl;
         TLorentzVector* myel = (TLorentzVector*) l.el_std_p4->At(el_ind);
@@ -2717,6 +2778,7 @@ bool PhotonAnalysis::ElectronTag2012B(LoopAll& l, int& diphotonVHlep_id, int& el
             }
 
             if(tag){
+		l.el_ind=el_ind;
                 lep_sync<<"run="<<l.run<<"\t";
                 lep_sync<<"lumis"<<l.lumis<<"\t";
                 lep_sync<<"event="<<(unsigned int) l.event<<"\t";
@@ -2779,7 +2841,7 @@ void PhotonAnalysis::ControlPlotsElectronTag2012B(LoopAll& l, TLorentzVector lea
 }
 
 void PhotonAnalysis::ControlPlotsMetTag2012B(LoopAll& l, TLorentzVector lead_p4, TLorentzVector sublead_p4, float bdtoutput, float evweight, std::string label){
-    TLorentzVector myMet = l.METCorrection2012B(lead_p4, sublead_p4);
+    TLorentzVector myMet = l.METCorrection2012B_new(lead_p4, sublead_p4);
     float corrMet    = myMet.Pt();
     float corrMetPhi = myMet.Phi();
 
@@ -2795,11 +2857,20 @@ void PhotonAnalysis::ControlPlotsMetTag2012B(LoopAll& l, TLorentzVector lead_p4,
     l.FillHist(Form("MetTag_uncorrmetPhi_%s",label.c_str()),   met_cat, l.met_phi_pfmet, evweight);
     l.FillHist(Form("MetTag_corrmet_%s",label.c_str()),        met_cat, corrMet,    evweight);
     l.FillHist(Form("MetTag_corrmetPhi_%s",label.c_str()),     met_cat, corrMetPhi, evweight);
-    l.FillHist(Form("MetTag_dPhiLead_%s",label.c_str()),       met_cat, fabs(myMet.DeltaPhi(lead_p4)), evweight);
-    l.FillHist(Form("MetTag_dPhiSub_%s",label.c_str()),        met_cat, fabs(myMet.DeltaPhi(sublead_p4)), evweight);
-    float maxdphi = (fabs(myMet.DeltaPhi(lead_p4))>fabs(myMet.DeltaPhi(sublead_p4))) ? myMet.DeltaPhi(lead_p4) : myMet.DeltaPhi(sublead_p4);
-    l.FillHist(Form("MetTag_dPhiMax_%s",label.c_str()),        met_cat, fabs(maxdphi), evweight);
-    l.FillHist(Form("MetTag_dPhiDipho_%s",label.c_str()),      met_cat, fabs(myMet.DeltaPhi(dipho_p4)), evweight);
+    bool cleanmet = l.METCleaning2012B(lead_p4, sublead_p4, myMet);
+    if( cleanmet ) {
+        l.FillHist(Form("MetTag_corrcleanedmet_%s",label.c_str()),        met_cat, corrMet,    evweight);
+        l.FillHist(Form("MetTag_corrcleanedmetPhi_%s",label.c_str()),     met_cat, corrMetPhi, evweight);
+    }
+
+
+    if(corrMet>70){
+        l.FillHist(Form("MetTag_dPhiLead_%s",label.c_str()),       met_cat, fabs(myMet.DeltaPhi(lead_p4)), evweight);
+        l.FillHist(Form("MetTag_dPhiSub_%s",label.c_str()),        met_cat, fabs(myMet.DeltaPhi(sublead_p4)), evweight);
+        float maxdphi = (fabs(myMet.DeltaPhi(lead_p4))>fabs(myMet.DeltaPhi(sublead_p4))) ? myMet.DeltaPhi(lead_p4) : myMet.DeltaPhi(sublead_p4);
+        l.FillHist(Form("MetTag_dPhiMax_%s",label.c_str()),        met_cat, fabs(maxdphi), evweight);
+        l.FillHist(Form("MetTag_dPhiDipho_%s",label.c_str()),      met_cat, fabs(myMet.DeltaPhi(dipho_p4)), evweight);
+    }
 
     TLorentzVector* leadjt;
     float maxpt=0;
@@ -2815,7 +2886,7 @@ void PhotonAnalysis::ControlPlotsMetTag2012B(LoopAll& l, TLorentzVector lead_p4,
         }
     }
 
-    if(maxpt > 0){
+    if(maxpt > 50){
         l.FillHist(Form("MetTag_leadJetPt_%s",label.c_str()),      met_cat, leadjt->Pt(), evweight);
         l.FillHist(Form("MetTag_dPhiJet_%s",label.c_str()),        met_cat, fabs(myMet.DeltaPhi(*leadjt)), evweight);
         l.FillHist2D(Form("MetTag_JetPt_dPhi_%s",label.c_str()),   met_cat, leadjt->Pt(), fabs(myMet.DeltaPhi(*leadjt)), evweight);
@@ -3622,6 +3693,10 @@ bool PhotonAnalysis::MuonTag2012B(LoopAll& l, int& diphotonVHlep_id, int& mu_ind
     float muptcut=20.;
 
     mu_ind=l.MuonSelection2012B(muptcut);
+    l.mu_ind=-1;    
+    if(doLooseLep){
+	l.mu_ind=mu_ind;
+    }
     if(mu_ind!=-1) {
         TLorentzVector* mymu = (TLorentzVector*) l.mu_glo_p4->At(mu_ind);
         muVtx=l.FindMuonVertex(mu_ind);
@@ -3657,7 +3732,7 @@ bool PhotonAnalysis::MuonTag2012B(LoopAll& l, int& diphotonVHlep_id, int& mu_ind
             if(!tag) diphotonVHlep_id=-1;
             mu_cat=(int)(abs(lead_p4.Eta())>1.5 || abs(sublead_p4.Eta())>1.5);
             if(tag){
-
+		l.mu_ind=mu_ind;
                 lep_sync<<"run="<<l.run<<"\t";
                 lep_sync<<"lumis"<<l.lumis<<"\t";
                 lep_sync<<"event="<<(unsigned int) l.event<<"\t";
@@ -3744,29 +3819,35 @@ bool PhotonAnalysis::VBFTag2012(int & ijet1, int & ijet2,
 {
     static std::vector<unsigned char> id_flags;
     bool tag = false;
+    bool localdebug = false;
 
     if(diphoton_id==-1) return tag;
 
     if( jetid_flags == 0 ) {
-	switchJetIdVertex( l, l.dipho_vtxind[diphoton_id] );
-	id_flags.resize(l.jet_algoPF1_n);
-	for(int ijet=0; ijet<l.jet_algoPF1_n; ++ijet ) {
-	    id_flags[ijet] = PileupJetIdentifier::passJetId(l.jet_algoPF1_cutbased_wp_level[ijet], PileupJetIdentifier::kLoose);
-	}
-	jetid_flags = (bool*)&id_flags[0];
+        if(localdebug) std::cout<<"VBFTag2012 -- no id flags, re-making"<<std::endl;
+        switchJetIdVertex( l, l.dipho_vtxind[diphoton_id] );
+        id_flags.resize(l.jet_algoPF1_n);
+        for(int ijet=0; ijet<l.jet_algoPF1_n; ++ijet ) {
+            id_flags[ijet] = PileupJetIdentifier::passJetId(l.jet_algoPF1_cutbased_wp_level[ijet], PileupJetIdentifier::kLoose);
+        }
+        jetid_flags = (bool*)&id_flags[0];
     }
 
     TLorentzVector lead_p4    = l.get_pho_p4( l.dipho_leadind[diphoton_id], l.dipho_vtxind[diphoton_id], &smeared_pho_energy[0]);
     TLorentzVector sublead_p4 = l.get_pho_p4( l.dipho_subleadind[diphoton_id], l.dipho_vtxind[diphoton_id], &smeared_pho_energy[0]);
 
     std::pair<int, int> jets;
+    if(localdebug) std::cout<<"VBFTag2012 -- getting highest pt jets -- with PU jetveto?"<<usePUjetveto<<std::endl;
     if(usePUjetveto){
         jets = l.Select2HighestPtJets(lead_p4, sublead_p4, jetid_flags );
     } else {
         jets = l.Select2HighestPtJets(lead_p4, sublead_p4);
     }
 
-    if(jets.first==-1 || jets.second==-1) return tag;
+    if(jets.first==-1 || jets.second==-1) {
+        if(localdebug) std::cout<<"VBFTag2012 -- no jets"<<std::endl;
+        return tag;
+    }
 
     TLorentzVector diphoton = lead_p4+sublead_p4;
 
@@ -3840,7 +3921,6 @@ bool PhotonAnalysis::VBFTag2012(int & ijet1, int & ijet2,
 }
 
 
-
 bool PhotonAnalysis::VHhadronicTag2011(LoopAll& l, int diphotonVHhad_id, float* smeared_pho_energy, bool nm1, float eventweight, float myweight, bool *jetid_flags ){
     //francesco 
 
@@ -3905,11 +3985,11 @@ bool PhotonAnalysis::VHhadronicTag2011(LoopAll& l, int diphotonVHhad_id, float* 
     absCosThetaStar_thresh=costhetastar_0tag_cut;
 
 
-    absCosThetaStar_thresh=0.57;
+    //    absCosThetaStar_thresh=0.57;
 
     //jet cuts
     nJets_thresh=2;
-    nJetsUpper_thresh=100;//no upper cut on 0 tag category
+    nJetsUpper_thresh=3;//no upper cut on 0 tag category
     ptJets_thresh=ptjet_0tag_cut;
     mjjLower_thresh=60.;
     mjjUpper_thresh=120.;
@@ -3971,7 +4051,7 @@ bool PhotonAnalysis::VHhadronicTag2011(LoopAll& l, int diphotonVHhad_id, float* 
     //doing the selection
     bool hasPassedCosThetaSelection=(abs_cosThetaStar<absCosThetaStar_thresh);
     bool hasPassedJetSelection= (njets>=nJets_thresh && njets_looseptcut<=nJetsUpper_thresh && isNotBtaggedLoose && dijet.M()>mjjLower_thresh && dijet.M()<mjjUpper_thresh);
-    bool hasPassedPhotonSelection= (lead_p4.Pt()>ptLeadTrig_thresh && sublead_p4.Pt()> ptSubleadTrig_thresh &&lead_p4.Pt()> ptLead_thresh && sublead_p4.Pt()>ptSublead_thresh &&  diphoton.Pt()>ptDiphot_thresh);
+    bool hasPassedPhotonSelection= (lead_p4.Pt()>ptLeadTrig_thresh && sublead_p4.Pt()> ptSubleadTrig_thresh &&lead_p4.Pt()> ptLead_thresh  &&  diphoton.Pt()>ptDiphot_thresh);
 
 
 
@@ -4030,9 +4110,9 @@ bool PhotonAnalysis::VHhadronicBtag2012(LoopAll& l, int diphotonVHhadBtag_id, fl
 
     std::pair<int, int> jets;
     if(usePUjetveto){
-        jets = l.SelectBtaggedAndHighestPtJets(lead_p4, sublead_p4, jetid_flags );
+        jets = l.SelectBtaggedAndHighestPtJets(l,diphotonVHhadBtag_id,lead_p4, sublead_p4, jetid_flags );
     } else {
-        jets = l.SelectBtaggedAndHighestPtJets(lead_p4, sublead_p4);
+        jets = l.SelectBtaggedAndHighestPtJets(l,diphotonVHhadBtag_id,lead_p4, sublead_p4);
     }
 
     if(jets.first==-1 or jets.second==-1) return tag;
@@ -4139,9 +4219,9 @@ bool PhotonAnalysis::VHhadronicBtag2012(LoopAll& l, int diphotonVHhadBtag_id, fl
        if(FMDEBUG) std::cout<<" njets: "<<njets<<" abs_cosThetaStar: "<<abs_cosThetaStar<<std::endl;
 
     //doing the selection
-       bool hasPassedCosThetaSelection=(abs_cosThetaStar<absCosThetaStar_thresh);
+    bool hasPassedCosThetaSelection=(abs_cosThetaStar<absCosThetaStar_thresh);
     bool hasPassedJetSelection= (njets>=nJets_thresh && njets_looseptcut<=nJetsUpper_thresh && isBtaggedLoose && dijet.M()>mjjLower_thresh && dijet.M()<mjjUpper_thresh);
-    bool hasPassedPhotonSelection= (lead_p4.Pt()>ptLeadTrig_thresh && sublead_p4.Pt()> ptSubleadTrig_thresh && lead_p4.Pt()> ptLead_thresh && sublead_p4.Pt()>ptSublead_thresh &&  diphoton.Pt()>ptDiphot_thresh);
+    bool hasPassedPhotonSelection= (lead_p4.Pt()>ptLeadTrig_thresh && sublead_p4.Pt()> ptSubleadTrig_thresh && lead_p4.Pt()> ptLead_thresh  &&  diphoton.Pt()>ptDiphot_thresh);
 
 
     if(l.event==DEBUG_EVENT_NUMBER_3){
@@ -4210,7 +4290,7 @@ bool PhotonAnalysis::TTHhadronicTag2012(LoopAll& l, int diphotonTTHhad_id, float
     ptSubleadTrig_thresh=25.;
 
     //jet cuts
-        nJets_thresh=5;
+    nJets_thresh=njets_tthHad_thresh;
     //    nJets_thresh=4;
     ptJets_thresh=ptJets_ttH_thresh;
 
@@ -4490,8 +4570,17 @@ bool PhotonAnalysis::TTHleptonicTag2012(LoopAll& l, int diphotonTTHlep_id, float
     ptSubleadTrig_thresh=25.;
 
     //jet cuts
-    nJets_thresh=3;
+    nJets_thresh=2;
     ptJets_thresh=ptJets_ttH_thresh;
+
+    TLorentzVector* lep;
+    if(l.isLep_ele){
+	lep= (TLorentzVector*) l.el_std_p4->At(elInd);
+    }else if(l.isLep_mu){
+	lep= (TLorentzVector*)l.mu_glo_p4->At(muonInd);
+    }
+
+
 
     //jet selection
     for(int ii=0; ii<l.jet_algoPF1_n; ++ii) {
@@ -4501,6 +4590,7 @@ bool PhotonAnalysis::TTHleptonicTag2012(LoopAll& l, int diphotonTTHlep_id, float
         if(fabs(p4_jet->Eta()) > 2.4) continue;
         bool isJet_LeadPho = false;
 	bool isJet_SubLeadPho = false;
+	bool isJet_Lep=false;
 
 	double dR_jet_PhoLead = p4_jet->DeltaR(lead_p4);
         if( dR_jet_PhoLead<0.5 ) isJet_LeadPho = true;
@@ -4508,7 +4598,11 @@ bool PhotonAnalysis::TTHleptonicTag2012(LoopAll& l, int diphotonTTHlep_id, float
         double dR_jet_PhoSubLead = p4_jet->DeltaR(sublead_p4);
         if( dR_jet_PhoSubLead<0.5 ) isJet_SubLeadPho = true;
 
-        if( isJet_LeadPho || isJet_SubLeadPho ) continue;
+	double dr_jet_lep= p4_jet->DeltaR(*lep);
+	//	cout<<"-----"<<dr_jet_lep<<" ";
+	if(dr_jet_lep<0.5) isJet_Lep = true;
+
+        if( isJet_LeadPho || isJet_SubLeadPho || isJet_Lep ) continue;
 
 	if(p4_jet->Pt()<ptJets_thresh) continue;
 
@@ -4525,14 +4619,16 @@ bool PhotonAnalysis::TTHleptonicTag2012(LoopAll& l, int diphotonTTHlep_id, float
 
     bool isBtaggedMedium;
     isBtaggedMedium=(njets_btagmedium>0);
-	
+    bool isBtaggedLoose;
+    isBtaggedLoose=(njets_btagloose>0);	
 
 
     if(FMDEBUG)
 	std::cout<<" njets: "<<njets<<std::endl;
 
     //doing the selection
-    bool hasPassedJetSelection= (njets>=nJets_thresh && isBtaggedMedium);
+        bool hasPassedJetSelection= (njets>=nJets_thresh && isBtaggedMedium);
+    //        bool hasPassedJetSelection = (njets>=nJets_thresh && isBtaggedLoose);
     bool hasPassedPhotonSelection= (lead_p4.Pt()>ptLeadTrig_thresh && sublead_p4.Pt()> ptSubleadTrig_thresh && lead_p4.Pt()> ptLead_thresh);// && sublead_p4.Pt()>ptSublead_thresh);
 
 
@@ -4796,7 +4892,7 @@ void PhotonAnalysis::computeBtagEff(LoopAll &l){
 		for(int ijet=0; ijet<l.jet_algoPF1_n; ++ijet) {
 		    TLorentzVector* jet1 = (TLorentzVector*)l.jet_algoPF1_p4->At(ijet);
 		    if(fabs(jet1->Eta()) > 2.4) continue;
-		    if(fabs(jet1->Pt()) < 20.) continue;
+		    if(fabs(jet1->Pt()) < 25.) continue;
 		    double dr_jet=jet1->DeltaR(*jet_mc);
 		    //  std::cout<<"eta"<<fabs(jet1->Eta())<<" pt:"<<fabs(jet1->Pt())<<"dr_jet"<<dr_jet<<std::endl;
 		    if(dr_jet>0.3) continue;//mc matching
@@ -4822,20 +4918,110 @@ void PhotonAnalysis::computeBtagEff(LoopAll &l){
 }
 
 
-float PhotonAnalysis::BtagReweight(LoopAll &l){
+float PhotonAnalysis::ElectronSFReweight(LoopAll &l){
+
+    float scale_factor=-10;
+
+    TLorentzVector* thissc = (TLorentzVector*) l.el_std_sc->At(l.el_ind);
+    float thiseta = fabs(thissc->Eta());
+
+    // central value                                                                                                                                                        
+    if ( fabs(thiseta)<1. )                           scale_factor = 0.984;                                                                                               
+    if ( fabs(thiseta)<1.442 && fabs(thiseta)>=1.0 )  scale_factor = 0.988;                                                                                               
+    if ( fabs(thiseta)<2.1 && fabs(thiseta)>=1.566 )  scale_factor = 1.016;                                                                                               
+    if ( fabs(thiseta)>=2.1 )                         scale_factor = 0.999;                                                                                               
+    // + 1 sigma                                                                                                                                                            
+    //if ( fabs(thiseta)<1. )                           scale_factor = 0.986;                                                                                               
+    //if ( fabs(thiseta)<1.442 && fabs(thiseta)>=1.0 )  scale_factor = 0.999;                                                                                               
+    //if ( fabs(thiseta)<2.1 && fabs(thiseta)>=1.566 )  scale_factor = 1.024;                                                                                               
+    //if ( fabs(thiseta)>=2.1 )                         scale_factor = 1.017;                                                                                               
+    //                                                                                                                                                                      
+    // to switch off                                                                                                                                                        
+    // scale_factor = 1.;        
+
+    return scale_factor;
+
+}
+
+
+
+float PhotonAnalysis::MuonSFReweight(LoopAll &l){
+
+   float scale_factor=-10;
+
+    TLorentzVector* mymu = (TLorentzVector*) l.mu_glo_p4->At(l.mu_ind);
+    float etaMu = mymu->Eta();
+    // values for full dataset of moriond https://indico.cern.ch/getFile.py/access?contribId=2&resId=0&materialId=slides&confId=233592
+    if ( fabs(etaMu)<0.9 )                     scale_factor = 0.9938;                                                                                                     
+    if ( fabs(etaMu)>=0.9 && fabs(etaMu)<1.2 ) scale_factor = 0.9915;                                                                                                     
+    if ( fabs(etaMu)>=1.2 )                    scale_factor = 0.9992;                                                                                                     
+    // + 1 sigma                                                                                                                                                            
+    //if ( fabs(etaMu)<0.9 )                     scale_factor = 0.9983;                                                                                                     
+    //if ( fabs(etaMu)>=0.9 && fabs(etaMu)<1.2 ) scale_factor = 0.9979;                                                                                                     
+    //if ( fabs(etaMu)>=1.2 )                    scale_factor = 1.0056;                                                                                                     
+    // no SF                                                                                                                                                                
+    //scale_factor = 1.;                                                                                                                                                    
+
+    return scale_factor;
+
+}
+
+
+
+
+
+
+float PhotonAnalysis::BtagReweight(LoopAll &l, bool shiftBtagEffUp_bc, bool shiftBtagEffDown_bc, bool shiftBtagEffUp_l, bool shiftBtagEffDown_l, int WP){
 	    int nBjets=0,nCjets=0,nLjets=0; 
-	    float eff_b=0.80,eff_c=0.39,eff_l=0.13;
-	    float SFb=1.008,SFc=1.008,SFl=1.09;
+	    float eff_b,eff_c,eff_l;
+	    float SFb,SFc,SFl;	   
+
+	    //loose WP
+	    if(WP==0){
+		eff_b=0.80,eff_c=0.39,eff_l=0.13;
+		SFb=1.008,SFc=1.008,SFl=1.09;
+	    } else if(WP ==1) {
+	    //medium WP
+		eff_b=0.675,eff_c=0.08,eff_l=0.016;
+		SFb=0.963,SFc=0.963,SFl=1.16;
+	    }
+
+	    if(WP == 0){
+		if(shiftBtagEffUp_bc){
+		    SFb=1.031,SFc=1.054,SFl=1.09;
+		}else if(shiftBtagEffDown_bc){
+		    SFb=0.985,SFc=0.962,SFl=1.09;
+		}else if(shiftBtagEffUp_l){
+		    SFb=1.008,SFc=1.008,SFl=1.11;
+		}else if(shiftBtagEffDown_l){
+		    SFb=1.008,SFc=1.008,SFl=1.07;
+		}
+	    }else if(WP ==1){
+		if(shiftBtagEffUp_bc){
+		    SFb=0.983,SFc=1.003,SFl=1.16;
+		}else if(shiftBtagEffDown_bc){
+		    SFb=0.943,SFc=0.923,SFl=1.16;
+		}else if(shiftBtagEffUp_l){
+		    SFb=0.963,SFc=0.963,SFl=1.20;
+		}else if(shiftBtagEffDown_l){
+		    SFb=0.963,SFc=0.963,SFl=1.12;
+		}
+	    }
 
 	    float w=-1;
-	    //	    	    std::cout<<"gp:"<<l.gp_n<<endl;
+	    //	    	    std::cout<<"gp:"<<l.gp_n<<endl;//decomment on analysis input!
 	    for (int gi=0;gi<l.gp_n;gi++){
 		if(l.gp_status[gi]!=3)continue;
-		if (abs(l.gp_pdgid[gi])>5) continue;
+		if (abs(l.gp_pdgid[gi])>5 && abs(l.gp_pdgid[gi])!=21 ) continue;
 		TLorentzVector* jet_mc = (TLorentzVector*)l.gp_p4->At(gi);
-		//std::cout<<"pt "<<jet_mc->Pt()<<std::endl;
+		if (jet_mc->Pt()<0.1 ) continue;
+		//		std::cout<<"pt "<<jet_mc->Pt()<<std::endl;
+
 		for(int ijet=0; ijet<l.jet_algoPF1_n; ++ijet) {
 		    TLorentzVector* jet1 = (TLorentzVector*)l.jet_algoPF1_p4->At(ijet);
+		    if(fabs(jet1->Eta()) > 2.4) continue;
+		    if(fabs(jet1->Pt()) < 25.) continue;
+		    //		    cout<<"jet1 preso"<<endl;
 		    double dr_jet=jet1->DeltaR(*jet_mc);
 		    if(dr_jet>0.3) continue;//mc matching
 		    if(abs(l.gp_pdgid[gi])==5){
@@ -4845,31 +5031,26 @@ float PhotonAnalysis::BtagReweight(LoopAll &l){
 		    }else{
 			nLjets++;
 		    }
+		    //		    if(l.gp_pdgid[gi]==9 || l.gp_pdgid[gi]==21)cout<<"pdg"<<l.gp_pdgid[gi]<<endl;
 		}
 	    }
 
-
+	    //	    cout<<"nnnn"<<nBjets<<" "<<nCjets<<" "<<nLjets<<endl;
 	
-	    BTagWeight b(1,100,eff_b,eff_c,eff_l);//b(nbtagmin,nbtagmax,beff,ceff,leff)
+	    BTagWeight b(1,6,eff_b,eff_c,eff_l);//b(nbtagmin,nbtagmax,beff,ceff,leff)
 
 
-	    if(nBjets>0||nCjets>0||nLjets>0){
-		//	std::cout<<"nb:"<<nBjets<<" nC:"<<nCjets<<" nL"<<nLjets<<endl;
-	    for(int ib=0;ib<nBjets+1;ib++)
-		for(int ic=0;ic<nCjets+1;ic++)
-		    for(int il=0;il<nLjets+1;il++)
-			{
-			    w= b.weight(ib,ic,il,SFb,SFc,SFl,1);
-			    /*
-			      float wbcp= b.weight(ib,ic,il,1,1,1.1,1);
-			      float wbcm= b.weight(ib,ic,il,0.8,0.8,1.1,1);
-			      float wlp= b.weight(ib,ic,il,0.9,0.9,1.2,1);
-			      float wlm= b.weight(ib,ic,il,0.9,0.9,1.0,1);
-			      float err=sqrt((wbcp-wbcm)*(wbcp-wbcm)+(wlp-wlm)*(wlp-wlm));
-			      std::cout << ib << "   " << ic << "  " << "  " << il << "  " << w << " +- " <<   std::endl; */
+	    w= b.weight(nBjets,nCjets,nLjets,SFb,SFc,SFl,1);
+	    /*
+	      float wbcp= b.weight(ib,ic,il,1,1,1.1,1);
+	      float wbcm= b.weight(ib,ic,il,0.8,0.8,1.1,1);
+	      float wlp= b.weight(ib,ic,il,0.9,0.9,1.2,1);
+	      float wlm= b.weight(ib,ic,il,0.9,0.9,1.0,1);
+	      float err=sqrt((wbcp-wbcm)*(wbcp-wbcm)+(wlp-wlm)*(wlp-wlm));
+	      std::cout << ib << "   " << ic << "  " << "  " << il << "  " << w << " +- " <<   std::endl; */
+	   
+	    //	    cout<<w<<endl;
 
-			}
-	    }
 	    if(w>0){
 		return w;
 	    }else{
@@ -4879,8 +5060,6 @@ float PhotonAnalysis::BtagReweight(LoopAll &l){
 
 
 // ----------------------------------------------------------------------------------------------------
-
-
 
 
 //met at analysis step
@@ -5227,7 +5406,8 @@ pair<double,double> PhotonAnalysis::ComputeNewSigmaMs(LoopAll &l, int ipho1, int
     return result;
 }
 
-void PhotonAnalysis::saveMassFacDatCardTree(LoopAll &l, int cur_type, int category, float evweight, int ipho1, int ipho2, int ivtx, float vtxP, TLorentzVector lead_p4, TLorentzVector sublead_p4, double sigmaMrv, double sigmaMwv, double sigmaMeonly, string trainPhil, float lead_id_mva, float sublead_id_mva){
+
+void PhotonAnalysis::saveDatCardTree(LoopAll &l, int cur_type, int category, int inc_cat, float evweight, int ipho1, int ipho2, int ivtx, TLorentzVector lead_p4, TLorentzVector sublead_p4, bool isCutBased, double sigmaMrv, double sigmaMwv, double sigmaMeonly, float vtxP, string trainPhil, float lead_id_mva, float sublead_id_mva){
 
    // track the scale and smear uncertainties per event
     float scale1, scale1_err, scale2, scale2_err;
@@ -5235,17 +5415,25 @@ void PhotonAnalysis::saveMassFacDatCardTree(LoopAll &l, int cur_type, int catego
     float scale_err = ComputeEventScaleError(l,ipho1,ipho2,scale1,scale1_err,scale1,scale1_err);
     float smear_err = ComputeEventSmearError(l,ipho1,ipho2,smear1,smear1_err,smear1,smear1_err);
 
-   float bdtout = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
+    if (!isCutBased){ 
+       float bdtout = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
 
-   // calculate diphobdt given shift in idMVA
-   float bdtout_id_up   = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva+0.01, sublead_id_mva+0.01);
-   float bdtout_id_down = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva-0.01, sublead_id_mva-0.01);
+       // calculate diphobdt given shift in idMVA
+       float bdtout_id_up   = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva+0.01, sublead_id_mva+0.01);
+       float bdtout_id_down = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,sigmaMrv, sigmaMwv, sigmaMeonly, trainPhil.c_str(), lead_id_mva-0.01, sublead_id_mva-0.01);
 
-   // calculate diphobdt given shift in sigmaE from regression
-   pair<double,double> newSigmaMsUp = ComputeNewSigmaMs(l,ipho1,ipho2,ivtx,1.);
-   pair<double,double> newSigmaMsDown = ComputeNewSigmaMs(l,ipho1,ipho2,ivtx,-1.);
-   float bdtout_sigE_up =   l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,newSigmaMsUp.first, newSigmaMsUp.second, newSigmaMsUp.first, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
-   float bdtout_sigE_down = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,newSigmaMsDown.first, newSigmaMsDown.second, newSigmaMsDown.first, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
+       // calculate diphobdt given shift in sigmaE from regression
+       pair<double,double> newSigmaMsUp = ComputeNewSigmaMs(l,ipho1,ipho2,ivtx,1.);
+       pair<double,double> newSigmaMsDown = ComputeNewSigmaMs(l,ipho1,ipho2,ivtx,-1.);
+       float bdtout_sigE_up =   l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,newSigmaMsUp.first, newSigmaMsUp.second, newSigmaMsUp.first, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
+       float bdtout_sigE_down = l.diphotonMVA(ipho1,ipho2,ivtx,vtxP,lead_p4,sublead_p4,newSigmaMsDown.first, newSigmaMsDown.second, newSigmaMsDown.first, trainPhil.c_str(), lead_id_mva, sublead_id_mva);
+       
+       l.FillTree("bdtout",bdtout,"datacard_trees");
+       l.FillTree("bdtout_id_up",bdtout_id_up,"datacard_trees");
+       l.FillTree("bdtout_id_down",bdtout_id_down,"datacard_trees");
+       l.FillTree("bdtout_sigE_up",bdtout_sigE_up,"datacard_trees");
+       l.FillTree("bdtout_sigE_down",bdtout_sigE_down,"datacard_trees");
+    }
    int proc_id=-1;
    if (l.signalNormalizer->GetProcess(cur_type)=="ggh") proc_id=0;
    if (l.signalNormalizer->GetProcess(cur_type)=="vbf") proc_id=1;
@@ -5253,13 +5441,13 @@ void PhotonAnalysis::saveMassFacDatCardTree(LoopAll &l, int cur_type, int catego
    if (l.signalNormalizer->GetProcess(cur_type)=="tth") proc_id=3;
 
    l.FillTree("category",category,"datacard_trees");
+   l.FillTree("inc_cat",inc_cat,"datacard_trees");
    l.FillTree("process_id",proc_id,"datacard_trees");
    l.FillTree("weight",evweight,"datacard_trees");
    l.FillTree("scale1",scale1,"datacard_trees");
    l.FillTree("scale1_err",scale1_err,"datacard_trees");
    l.FillTree("scale2",scale2,"datacard_trees");
    l.FillTree("scale2_err",scale2_err,"datacard_trees");
-   l.FillTree("scale_err",scale_err,"datacard_trees");
    l.FillTree("scale_err",scale_err,"datacard_trees");
    l.FillTree("w_scale_err_2",evweight*scale_err*scale_err,"datacard_trees");
    l.FillTree("smear_err",smear_err,"datacard_trees");
@@ -5268,17 +5456,16 @@ void PhotonAnalysis::saveMassFacDatCardTree(LoopAll &l, int cur_type, int catego
    l.FillTree("smear1_err",smear1_err,"datacard_trees");
    l.FillTree("smear2",smear2,"datacard_trees");
    l.FillTree("smear2_err",smear2_err,"datacard_trees");
-   l.FillTree("bdtout",bdtout,"datacard_trees");
-   l.FillTree("bdtout_id_up",bdtout_id_up,"datacard_trees");
-   l.FillTree("bdtout_id_down",bdtout_id_down,"datacard_trees");
-   l.FillTree("bdtout_sigE_up",bdtout_sigE_up,"datacard_trees");
-   l.FillTree("bdtout_sigE_down",bdtout_sigE_down,"datacard_trees");
    l.FillTree("lead_eta",lead_p4.Eta(),"datacard_trees");
    l.FillTree("sublead_eta",sublead_p4.Eta(),"datacard_trees");
    l.FillTree("lead_r9",l.pho_r9[ipho1],"datacard_trees");
    l.FillTree("sublead_r9",l.pho_r9[ipho2],"datacard_trees");
-   l.FillTree("lead_isEB",TMath::Abs(lead_p4.Eta())<1.444,"datacard_trees");
-   l.FillTree("sublead_isEB",TMath::Abs(sublead_p4.Eta())<1.444,"datacard_trees");
+   double lead_calo_eta = ((TVector3*)l.sc_xyz->At(l.pho_scind[ipho1]))->Eta();
+   double sublead_calo_eta = ((TVector3*)l.sc_xyz->At(l.pho_scind[ipho2]))->Eta();
+   l.FillTree("lead_calo_eta",lead_calo_eta,"datacard_trees");
+   l.FillTree("sublead_calo_eta",sublead_calo_eta,"datacard_trees");
+   l.FillTree("lead_isEB",TMath::Abs(lead_calo_eta)<1.444,"datacard_trees");
+   l.FillTree("sublead_isEB",TMath::Abs(sublead_calo_eta)<1.444,"datacard_trees");
    l.FillTree("vbfmva",myVBF_MVA,"datacard_trees");
 
 }
@@ -5335,6 +5522,55 @@ void PhotonAnalysis::saveSpinTree(LoopAll& l, int category, float evweight, TLor
    l.FillTree("lead_id_mva",lead_id_mva,"spin_trees");
    l.FillTree("sublead_id_mva",sublead_id_mva,"spin_trees");
 
+}
+
+
+
+void PhotonAnalysis::saveVBFTree(LoopAll &l, int category, float evweight, float diphobdt_output){
+
+  l.FillTree("weight",evweight,"vbf_trees");
+  l.FillTree("category",category,"vbf_trees");
+  l.FillTree("diphomva",diphobdt_output,"vbf_trees");
+  l.FillTree("vbfmva",myVBF_MVA,"vbf_trees");
+  l.FillTree("leadJPt",myVBFLeadJPt,"vbf_trees");
+  l.FillTree("subleadJPt",myVBFSubJPt,"vbf_trees");
+  l.FillTree("leadJEta",myVBF_leadEta,"vbf_trees");
+  l.FillTree("subleadJEta",myVBF_subleadEta,"vbf_trees");
+  l.FillTree("MJJ",myVBF_Mjj,"vbf_trees");
+  l.FillTree("dEtaJJ",myVBFdEta,"vbf_trees");
+  l.FillTree("zepp",myVBFZep,"vbf_trees");
+  l.FillTree("dPhiJJGammaGamma",myVBFdPhi,"vbf_trees");
+  l.FillTree("mass",myVBF_Mgg,"vbf_trees");
+  
+  // gen variables:
+  //gen photons,  higgs
+  TLorentzVector *genpho1 = (TLorentzVector*)l.gh_pho1_p4->At(0);
+  TLorentzVector *genpho2 = (TLorentzVector*)l.gh_pho2_p4->At(0);
+  TLorentzVector higgs = *((TLorentzVector*)l.gh_higgs_p4->At(0));
+  
+  // gen jets
+  std::vector<int> sorted_jets;
+  for(int ijet=0; ijet<l.genjet_algo1_n; ++ijet) {
+      TLorentzVector * p4 = (TLorentzVector*)l.genjet_algo1_p4->At(ijet);
+      if( p4->DeltaR( *genpho1 ) > 0.5 && p4->DeltaR( *genpho2 ) > 0.5  ) {
+	  sorted_jets.push_back(ijet);
+      }
+  }
+  std::sort(sorted_jets.begin(),sorted_jets.end(),
+	    ClonesSorter<TLorentzVector,double,std::greater<double> >(l.genjet_algo1_p4,&TLorentzVector::Pt));
+  
+  TLorentzVector* j1 ;
+  TLorentzVector* j2 ;
+  float myVBFdPhi_gen = -99;
+  if ( sorted_jets.size() > 1){
+      j1 = (TLorentzVector*)l.genjet_algo1_p4->At(sorted_jets[0]);
+      j2 = (TLorentzVector*)l.genjet_algo1_p4->At(sorted_jets[1]);
+      TLorentzVector dijet = (*j1) + (*j2);
+      myVBFdPhi_gen =  fabs(higgs.DeltaPhi(dijet));
+  }
+  
+  
+  l.FillTree("dPhiJJGammaGammaGen",myVBFdPhi_gen,"vbf_trees");
 }
 
 void PhotonAnalysis::VBFAngles(TLorentzVector& gamma1, TLorentzVector& gamma2, TLorentzVector& J1, TLorentzVector& J2)
@@ -5478,6 +5714,49 @@ double PhotonAnalysis::getCosThetaHX(TLorentzVector g1, TLorentzVector g2){
   TVector3 direction_hx = diphoton.Vect().Unit(); // HX direction
 
   return TMath::Cos(direction_hx.Angle(refDIPHO_g1.Vect()));
+
+}
+
+
+float PhotonAnalysis::getDiphoBDTOutput(LoopAll &l,int diphoton_id, TLorentzVector lead_p4,TLorentzVector sublead_p4, std::string bdtTrainingPhilosophy){
+
+    //    cout<<"[DEBUG]: index"<<l.dipho_leadind[diphoton_id]<<" index sublead "<<l.dipho_subleadind[diphoton_id]<<" nphot "<<l.pho_n<<endl;
+    //      cout<<"[DEBUG]:pt"<<lead_p4.Pt()<<endl;                                                                                                                     
+
+    float phoid_mvaout_lead;
+    float phoid_mvaout_sublead;
+
+    
+    
+    phoid_mvaout_lead = ( dataIs2011 ?
+			  l.photonIDMVA(l.dipho_leadind[diphoton_id],0,lead_p4,
+					bdtTrainingPhilosophy.c_str()) :
+			  l.photonIDMVANew(l.dipho_leadind[diphoton_id],0,
+					   lead_p4,bdtTrainingPhilosophy.c_str()) );
+    phoid_mvaout_sublead =( dataIs2011 ?
+			    l.photonIDMVA(l.dipho_subleadind[diphoton_id],0,lead_p4,
+					  bdtTrainingPhilosophy.c_str()) :
+			    l.photonIDMVANew(l.dipho_subleadind[diphoton_id],0,
+					     lead_p4,bdtTrainingPhilosophy.c_str()) );
+    //setting resolutions
+    massResolutionCalculator->Setup(l,&photonInfoCollection[l.dipho_leadind[diphoton_id]],&photonInfoCollection[l.dipho_subleadind[diphoton_id]],0,//default vertex
+				    massResoPars,nR9Categories,nEtaCategories,beamspotSigma,true);
+
+    float sigmaMrv = massResolutionCalculator->massResolutionCorrVtx();
+    float sigmaMwv = massResolutionCalculator->massResolutionWrongVtx();
+    float sigmaMeonly = massResolutionCalculator->massResolutionEonly();
+
+
+    //diphoton mva                                                                                                                                                     
+    float diphobdt_output = l.diphotonMVA(l.dipho_leadind[diphoton_id],l.dipho_subleadind[diphoton_id],0 ,//vertex 0 probability 1                             
+					  1,lead_p4,sublead_p4,sigmaMrv,sigmaMwv,sigmaMeonly,
+					  bdtTrainingPhilosophy.c_str(),
+					  phoid_mvaout_lead,phoid_mvaout_sublead);
+
+    //    cout<<"[DEBUG]:diphobdt_output "<<diphobdt_output<<endl;
+    
+
+    return diphobdt_output;
 
 }
 
